@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Core/Core.csproj" />
+  </Folder>
+  <Folder Name="/src/MiniMods/">
+    <Project Path="src/MiniMods/ExampleMiniMod/ExampleMiniMod.csproj" />
+  </Folder>
+</Solution>

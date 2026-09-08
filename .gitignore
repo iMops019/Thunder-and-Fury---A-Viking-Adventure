@@ -1,0 +1,20 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+*.user
+.vs/
+
+## NuGet restore cache (local RestorePackagesPath)
+/packages/
+
+## Local game/toolchain references — never commit third-party DLLs
+libs/**
+!libs/.gitkeep
+
+## Local env override (per-machine Valheim install path)
+.env
+*.local.props
+
+## OS
+.DS_Store
+Thumbs.db
