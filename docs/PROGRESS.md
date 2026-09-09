@@ -185,11 +185,13 @@ and levels is ours, with our own XP curves and level-gated effects.
       they'll need live tuning once actually seen in-game, not something
       to get right blind. Compiles clean. **Not yet tested in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
-      Fishing, Skinning, Smithing, and Cooking now built)*. Gathering:
-      Mining (built), Woodcutting (built), Fishing (built), Skinning
-      (built). Production: Smithing (built), Cooking (built), Fletching,
-      Building, Crafting. Combat: Attack, Strength, Defense (broad
-      OSRS-style stats, not per-weapon-type like vanilla).
+      Fishing, Skinning, Smithing, Cooking, and Fletching now built)*.
+      Gathering: Mining (built), Woodcutting (built), Fishing (built),
+      Skinning (built). Production: Smithing (built), Cooking (built),
+      Fletching (built, registration + XP split only, no gameplay
+      effects — nothing designed for those yet), Building, Crafting.
+      Combat: Attack, Strength, Defense (broad OSRS-style stats, not
+      per-weapon-type like vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
       efficiency for weapon use (the "higher Attack level, less stamina
       drain in combat" mechanic). Strength = single shared damage-scaling
@@ -239,7 +241,10 @@ and levels is ours, with our own XP curves and level-gated effects.
       blocked:** Magic/Rare tiers for ordinary vanilla gear — same
       undesigned "which items, what odds" question flagged under
       RarityLoot's own Pillar 3 entry, unrelated to what Smithing itself
-      needed to do. Compiles clean. **Not yet tested in-game.**
+      needed to do. **Boundary fix while wiring up Fletching:** the
+      Workbench (shared with bow/arrow crafting) now correctly excludes
+      Fletching's items from Smithing XP — see the Fletching entry below.
+      Compiles clean. **Not yet tested in-game.**
 - [x] **Cooking** ([SkillSystem/CookingSkill.cs](../src/Core/SkillSystem/CookingSkill.cs), [Patches/CookingPatches.cs](../src/Core/Patches/CookingPatches.cs)) —
       *(implemented, not yet runtime-tested — burn-chance half done,
       special-recipe tier still blocked on design)*. Seventh skill, and
@@ -276,6 +281,29 @@ and levels is ours, with our own XP curves and level-gated effects.
       Also unaddressed: [valheim-food-reference.md](valheim-food-reference.md)
       still needs its pre-1.0-to-1.0 data refresh. Compiles clean. **Not
       yet tested in-game.**
+- [x] **Fletching** ([SkillSystem/FletchingSkill.cs](../src/Core/SkillSystem/FletchingSkill.cs)) —
+      *(implemented, not yet runtime-tested — registration + correct XP
+      only, no gameplay effects)*. Eighth skill, and unlike every other
+      skill built this session, vision.md never gave Fletching its own
+      design section — it's named once in the skill list with nothing
+      else decided. Deliberately built only what that one line commits
+      to: a distinct production skill for bow/arrow crafting, separate
+      from Smithing. No fail chance, no milestone, nothing invented —
+      there's no vision.md text to build those from, unlike Cooking's
+      burn-prevention or Woodcutting's milestone. Real technical problem
+      solved while wiring this up: Smithing's `CraftingStation.m_craftingSkill`
+      reuse is per-*station*, not per-recipe, and bows/arrows craft at
+      the same Workbench Smithing already claims — a station can only
+      declare one skill, so reusing that same mechanism for Fletching
+      would just fight Smithing over the same field. Fixed by
+      intercepting at the one place that knows which recipe is actually
+      being crafted — `InventoryGui.m_craftRecipe` (confirmed public) —
+      checked in a Prefix on `Player.RaiseSkill` specifically when the
+      skill about to be raised is Smithing's (i.e. it came from a
+      station-level grant): if the recipe's item is Bow/Ammo, that XP is
+      reclassified as Fletching instead; everything else crafted at
+      Workbench/Forge/Black Forge still goes to Smithing untouched.
+      Compiles clean. **Not yet tested in-game.**
 - [ ] **Building** — *(designed, trivial)*. Not gated behind a
       level at all, stays open like vanilla. May exist as a nominal skill
       with no functional effect.
