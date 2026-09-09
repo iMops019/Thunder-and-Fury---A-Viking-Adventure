@@ -6,6 +6,6 @@
     <Project Path="src/MiniMods/ExampleMiniMod/ExampleMiniMod.csproj" />
     <Project Path="src/MiniMods/Quests/Quests.csproj" />
     <Project Path="src/MiniMods/RarityLoot/RarityLoot.csproj" />
-    <Project Path="src/MiniMods/WeightTweaks/WeightTweaks.csproj" />
+    <Project Path="src/MiniMods/ValheimQoL/ValheimQoL.csproj" />
   </Folder>
 </Solution>

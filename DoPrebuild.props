@@ -1,0 +1,18 @@
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    Read by JotunnLib's own build props (Paths.props inside the NuGet
+    package). When true, Jotunn's bundled JotunnBuildTask runs before build
+    and generates publicized copies of the game assemblies (public versions
+    of otherwise-internal/private fields like ItemDrop.ItemData.m_weight)
+    under valheim_Data/Managed/publicized_assemblies/ — needed for any code
+    that touches game types directly, which every project here does.
+
+    Left on for this repo since we need those publicized assemblies to
+    exist before anything compiles. It only needs to actually regenerate
+    them when the game updates; re-running it against an unchanged install
+    is a no-op cost, so there's no reason to flip it off day-to-day.
+  -->
+  <PropertyGroup>
+    <ExecutePrebuild>true</ExecutePrebuild>
+  </PropertyGroup>
+</Project>

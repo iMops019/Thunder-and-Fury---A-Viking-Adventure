@@ -1,22 +1,18 @@
 <Project>
 
   <!--
-    Every project in this solution reads ValheimInstallDir from here.
+    Game/BepInEx/Jotunn references are no longer hand-wired here — every
+    project instead references the official `JotunnLib` NuGet package,
+    which ships its own MSBuild props (JotunnLibRefsCorlib.props, verified
+    by extracting the real 2.29.2 .nupkg) that auto-locate VALHEIM_INSTALL
+    (env var, or the Windows registry Steam install for app 892970 as a
+    fallback — no env var needed on most machines) and wire up BepInEx,
+    Harmony, and the publicized game assemblies for you.
 
-    Set it once per machine as an environment variable named VALHEIM_INSTALL
-    (System Properties -> Environment Variables), e.g.:
-      VALHEIM_INSTALL = C:\Program Files (x86)\Steam\steamapps\common\Valheim
-
-    Do NOT hardcode a path in this file and commit it — it's per-machine.
-    A project can still override ValheimInstallDir locally via a
-    Directory.Build.props.local.props-style import if needed later.
+    See DoPrebuild.props at the repo root for the one knob that controls
+    whether Jotunn auto-generates those publicized assemblies.
   -->
   <PropertyGroup>
-    <ValheimInstallDir Condition="'$(ValheimInstallDir)' == ''">$(VALHEIM_INSTALL)</ValheimInstallDir>
-    <ValheimManagedDir>$(ValheimInstallDir)\valheim_Data\Managed</ValheimManagedDir>
-    <BepInExCoreDir>$(ValheimInstallDir)\BepInEx\core</BepInExCoreDir>
-    <BepInExPluginsDir>$(ValheimInstallDir)\BepInEx\plugins</BepInExPluginsDir>
-
     <TargetFramework>net48</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
@@ -24,11 +20,5 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-
-  <Target Name="EnsureValheimInstallDir" BeforeTargets="BeforeBuild">
-    <Error
-      Condition="'$(ValheimInstallDir)' == ''"
-      Text="ValheimInstallDir is not set. Set a VALHEIM_INSTALL environment variable pointing at your Valheim install folder, then restart your shell/IDE." />
-  </Target>
 
 </Project>

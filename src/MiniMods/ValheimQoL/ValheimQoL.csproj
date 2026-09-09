@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>ValheimQoL</AssemblyName>
+    <RootNamespace>ValheimQoL</RootNamespace>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Standalone QoL mod: doesn't use any Jotunn API, only BepInEx/Harmony
+      + the game assemblies — all still supplied by the JotunnLib package's
+      reference set (see Directory.Build.props/DoPrebuild.props at the repo
+      root). ExcludeAssets=runtime keeps Jotunn.dll itself out of this
+      mod's output; it isn't needed at runtime here and this mod is meant
+      to work even on a server without Jotunn installed.
+    -->
+    <PackageReference Include="JotunnLib" Version="2.29.2">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

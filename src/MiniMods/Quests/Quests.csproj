@@ -7,26 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="assembly_valheim">
-      <HintPath>$(ValheimManagedDir)\assembly_valheim.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(ValheimManagedDir)\UnityEngine.CoreModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="BepInEx">
-      <HintPath>$(BepInExCoreDir)\BepInEx.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="0Harmony">
-      <HintPath>$(BepInExCoreDir)\0Harmony.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Jotunn">
-      <HintPath>$(BepInExPluginsDir)\Jotunn\Jotunn.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+    <PackageReference Include="JotunnLib" Version="2.29.2">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

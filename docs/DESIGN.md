@@ -1,26 +1,24 @@
-# Design Notes
+# Design Notes (technical)
 
-## Vision
-
-A cozy-grinding RPG overhaul, not a speedrun mod. OSRS-flavored skills with
-our own XP curves, a magic/rare/legendary loot tier system built on the
-game's existing assets, and quests that ask you to actually do something
-("kill the boss in the 3rd area", "kill 20 trolls in the Black Forest") —
-not "find 5 mushrooms."
+Creative/gameplay design (skills, combat, gear tiers, quests, QoL feature
+list) lives in [valheim-mod-vision.md](valheim-mod-vision.md) — that's the
+primary, most up-to-date design doc. This file covers the technical side:
+repo structure, toolchain verification, and modding-limits research.
 
 ## Modding limits — how open is Valheim compared to Project Zomboid?
 
-Answered directly since this shapes every system below: **more constrained
-than PZ.** PZ's Lua layer is a sandboxed scripting surface the game was
-built to expose. Valheim has no official mod support at all — everything
-here is Harmony patches + reflection into the real Mono/IL2CPP game code via
-BepInEx, with Jotunn as a library that wraps the common patterns (adding
-prefabs, items, skills, recipes, UI panels, key bindings) so we're not
-hand-writing raw IL patches for every little thing.
+**More constrained than PZ.** PZ's Lua layer is a sandboxed scripting
+surface the game was built to expose. Valheim has no official mod support
+at all — everything here is Harmony patches + reflection into the real
+Mono game code via BepInEx, with Jotunn as a library that wraps the common
+patterns (adding prefabs, items, skills, recipes, UI panels, key bindings)
+so we're not hand-writing raw IL patches for every little thing.
 
 Practically, that means:
 - Adding data-shaped content (items, recipes, skills, status effects) is
-  well-trodden and safe — Jotunn has first-class APIs for this.
+  well-trodden and safe — Jotunn has first-class APIs for this, confirmed
+  real (e.g. `SkillManager.AddSkill` —
+  [Jotunn custom skills tutorial](https://valheim-modding.github.io/Jotunn/tutorials/skills.html)).
 - Adding new *behavior* (custom NPC AI, dialogue, quest logic) means
   cloning/patching existing game systems (`Humanoid`, `MonsterAI`,
   `Character`) with Harmony — more work than PZ, but proven possible.
@@ -32,84 +30,53 @@ Practically, that means:
   from, but they're proof the *approach* works and worth reading for
   architecture ideas.
 - No brand-new playable "class"/character slot — Valheim has one player
-  character type. "Adding a player" in the RPG sense here means adding
-  **NPCs** (quest givers, vendors), not a new playable character — that's
-  the realistic target and it's achievable.
+  character type. "Adding a player" in the RPG sense means adding **NPCs**
+  (quest givers, vendors), not a new playable character.
+- The magic/rare/legendary loot idea sits in the same space as the
+  existing open-source mod **EpicLoot** (Magic/Rare/Epic/Legendary/Mythic,
+  weighted rolls, effects scaling with rarity) — good prior art for the
+  roll/weighting math, not something to copy code from directly.
 
-## Core mod
+## Toolchain — verified, not guessed
 
-Shared framework everything else depends on:
-- **Skill framework** — wraps Jotunn's `SkillManager.AddSkill` (confirmed
-  real API: [Jotunn custom skills tutorial](https://valheim-modding.github.io/Jotunn/tutorials/skills.html)).
-  Jotunn registers the skill (name, icon, appears in the skill panel); *we*
-  own the XP curve, XP-gain triggers, and level-based effects — Jotunn
-  doesn't do any of that for us. This is where our own EXP values and
-  modifiers live, exposed via BepInEx config so numbers are tunable without
-  a recompile.
-- **Shared UI theme** — Jotunn's `GUIManager` for building panels; central
-  color palette / font / panel-style constants so every mini-mod's UI
-  looks like one mod, not five.
-- **Shared keybinds** — Jotunn's `InputManager` for custom key bindings
-  (e.g. opening a quest log or skill panel).
-- **Shared modifier registry** — a place other mini-mods read/write things
-  like "does this creature drop rarity loot" without depending on each
-  other directly.
+Extracted the real `JotunnLib` NuGet package (v2.29.2) rather than
+assuming how Jotunn wants to be referenced. Findings, confirmed against
+the official [JotunnModStub](https://github.com/Valheim-Modding/JotunnModStub)
+template and the package's own `build/*.props`:
 
-## Skills (in Core)
-
-TBD list — starter idea from the brief: Woodcutting, Mining, and other
-OSRS-inspired skills layered on top of/alongside vanilla's existing skills
-(vanilla has no Woodcutting/Mining skill today — these would be new,
-tracked via Jotunn `AddSkill`). Needs, per skill: what action grants XP,
-our own XP curve (formula + per-level thresholds), and what leveling
-actually unlocks or improves (yield, speed, rare-drop chance, etc.).
-**Not decided yet — needs your numbers.**
-
-## RarityLoot (mini-mod)
-
-Magic / Rare / Legendary tiers on top of vanilla items, reusing existing
-assets — recolor via material tint + a particle/glow effect, rarity-colored
-icon border in the UI. Architecturally this is the same space as the
-existing open-source mod **EpicLoot** (Magic/Rare/Epic/Legendary/Mythic,
-weighted rarity rolls, effects-per-item scaling with rarity, config-driven
-drop tables) — good prior art to study for the roll/weighting math, not to
-copy code from directly.
-
-Open questions: rarity tiers (Magic/Rare/Legendary, or add Epic/Mythic
-too?), what a rarity roll actually grants (stat bonus? proc effect?
-skill-XP-on-use?), and whether rarity should read from the Skills system
-(e.g. higher Mining level -> better rarity odds on ore-adjacent loot).
-
-## Quests (mini-mod)
-
-Structured objectives, not fetch quests:
-- Kill-boss-in-biome quests ("kill the boss in the 3rd area")
-- Kill-N-of-creature-in-biome quests ("kill 20 trolls in the Black Forest"),
-  stackable/runnable alongside other active quests
-- A quest giver NPC (or several) — feasible per the precedent mods above;
-  needs a custom prefab (cloned from an existing Humanoid) + Harmony hook
-  for interaction/dialogue + our own quest-state tracking and UI.
-
-Open questions: quest log UI (Core's shared UI theme), how many quest
-givers and where, reward structure (does completing quests grant Skill XP,
-rarity-loot chances, or just vanilla currency/items?).
-
-## WeightTweaks (mini-mod)
-
-QoL: every item's carry weight becomes config-adjustable — likely a global
-multiplier slider plus an optional per-item override table, applied by
-patching `ItemDrop.ItemData` weight lookups at load. Simplest of the four
-systems and a good "prove the deploy pipeline works" first target.
+- **Target framework: `net48`.** (Jotunn.dll itself ships as `net462`;
+  `net48` is the template's own choice and is backward-compatible.)
+- **Reference Jotunn via `<PackageReference Include="JotunnLib" />`, not
+  manual HintPaths.** The package's bundled `Paths.props` auto-detects
+  `VALHEIM_INSTALL` (env var, or the Windows registry for Steam app
+  `892970` as a fallback — no env var needed on most Windows machines) and
+  wires up BepInEx, Harmony, and every Unity module reference itself.
+- **Game-touching code needs "publicized" assemblies.** Fields like
+  `ItemDrop.ItemData.m_weight` are otherwise internal/private. Jotunn
+  bundles a prebuild MSBuild task (`JotunnBuildTask`) that generates public
+  copies under `valheim_Data/Managed/publicized_assemblies/` when
+  `DoPrebuild.props` sets `ExecutePrebuild=true` (see that file at the repo
+  root) — confirmed working by actually running it against the local
+  install (all 10 expected `*_publicized.dll` files generated).
+- **Known quirk, confirmed by hitting it:** building the whole solution in
+  parallel races every project's prebuild task against the same shared
+  output folder → intermittent file-lock errors on the first cold build.
+  Fix: `dotnet build -m:1` once, then normal parallel builds are fine.
+- Jotunn.dll itself is excluded from each mod's build output
+  (`ExcludeAssets=runtime` on the `PackageReference`) since it's meant to
+  be a single shared runtime install (`BepInEx/plugins/Jotunn/`), not
+  bundled redundantly inside every mod's own output folder.
 
 ## Mod split (as scaffolded)
 
 ```
 Core             Skill framework, shared UI theme, shared keybinds, shared
                  modifier registry. Everything else depends on this.
-RarityLoot       Magic/Rare/Legendary item tiers + visuals.
-Quests           Objective-based quest system + quest giver NPC(s).
-WeightTweaks     Standalone QoL — carry-weight slider. No dependency on
-                 Core beyond Jotunn conventions; ships/updates independently.
+RarityLoot       Magic/Rare/Legendary item tiers + visuals. Depends on Core.
+Quests           Objective-based quest system + quest giver NPC(s). Depends on Core.
+ValheimQoL       Standalone QoL layer (weight/stack/stamina/etc). No Core
+                 or Jotunn runtime dependency — ships/updates independently.
+ExampleMiniMod   Template — copy to start a new Core-dependent mini-mod.
 ```
 
 Each is its own BepInEx plugin GUID/DLL, so a 1.0 (or later) update that
@@ -117,13 +84,14 @@ breaks one system's game hook doesn't take the others down with it.
 
 ## Status
 
-- [x] Toolchain validated: game assembly references (`assembly_valheim`,
-      `assembly_utils`, `UnityEngine.CoreModule`) build clean against the
-      real 1.0-bound install.
-- [ ] BepInEx + Jotunn installed into the Valheim folder (needed for a full
-      green build) — install via r2modman or the Thunderstore app rather
-      than a manual copy, so updates stay manageable.
-- [ ] Skill list + XP curves + per-level effects (needs your numbers)
-- [ ] Rarity tiers + what a rarity roll grants
-- [ ] Quest list + quest giver placement + reward structure
-- [ ] Weight slider range/defaults
+- [x] Toolchain validated end-to-end against the real local install: game
+      assemblies resolve, publicized assemblies generate successfully,
+      only failure remaining is the not-yet-installed BepInEx (expected).
+- [ ] BepInEx installed into the Valheim folder (needed for a full green
+      build) — install via r2modman or the Thunderstore app.
+- [ ] Skill list + XP curves + per-level effects — see vision.md (mostly
+      decided; Cooking's special-recipe tier and a few milestones still open)
+- [ ] Rarity tiers + what a rarity roll grants — see vision.md open questions
+- [ ] Quest list + quest giver placement + reward structure — see vision.md
+- [ ] Weight slider range/defaults — ValheimQoL has working defaults
+      (0.5x material weight, 2x stack size) already, tune later

@@ -8,43 +8,15 @@
 
   <ItemGroup>
     <!--
-      TODO(verify-once-installed): confirm these three filenames still match
-      the 1.0 build. Iron Gate has renamed/split assemblies before between
-      major updates — check $(ValheimManagedDir) directly rather than
-      trusting this list.
+      Compile-time only: Jotunn itself is a shared runtime dependency the
+      player installs separately as its own BepInEx plugin, so we don't
+      want our own copy of Jotunn.dll (or BepInEx.dll/0Harmony.dll) copied
+      into this mod's output — that would risk two copies loading at once.
     -->
-    <Reference Include="assembly_valheim">
-      <HintPath>$(ValheimManagedDir)\assembly_valheim.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="assembly_utils">
-      <HintPath>$(ValheimManagedDir)\assembly_utils.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(ValheimManagedDir)\UnityEngine.CoreModule.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-
-    <!--
-      TODO(verify-once-installed): BepInEx.dll and 0Harmony.dll ship inside
-      BepInEx/core after you've installed BepInEx into the Valheim folder
-      (BepInEx is not part of a vanilla install). Jotunn.dll lands under
-      BepInEx/plugins/Jotunn once Jotunn itself is installed (e.g. via
-      Thunderstore/r2modman) — install both before the first real build.
-    -->
-    <Reference Include="BepInEx">
-      <HintPath>$(BepInExCoreDir)\BepInEx.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="0Harmony">
-      <HintPath>$(BepInExCoreDir)\0Harmony.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Jotunn">
-      <HintPath>$(BepInExPluginsDir)\Jotunn\Jotunn.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
+    <PackageReference Include="JotunnLib" Version="2.29.2">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
