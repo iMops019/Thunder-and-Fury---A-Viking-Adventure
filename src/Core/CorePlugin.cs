@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using VikingAdventure.Core.Patches;
 using VikingAdventure.Core.SkillSystem;
 
 namespace VikingAdventure.Core
@@ -46,6 +47,8 @@ namespace VikingAdventure.Core
             PrefabManager.OnVanillaPrefabsAvailable += WoodcuttingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += MiningSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += FishingSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += SkinningSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += SkinningSystem.RegisterDefaults;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }

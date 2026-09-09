@@ -47,6 +47,9 @@ namespace VikingAdventure.RarityLoot
         public static ConfigEntry<int> VoltunPickaxeCopperCost;
         public static ConfigEntry<int> VoltunPickaxeBronzeCost;
 
+        public static ConfigEntry<int> SkinningKnifeWoodCost;
+        public static ConfigEntry<int> SkinningKnifeFlintCost;
+
         private void Awake()
         {
             BindConfig();
@@ -55,6 +58,7 @@ namespace VikingAdventure.RarityLoot
 
             PrefabManager.OnVanillaPrefabsAvailable += StonePickaxe.Register;
             PrefabManager.OnVanillaPrefabsAvailable += VoltunsSet.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += SkinningKnife.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
@@ -100,6 +104,11 @@ namespace VikingAdventure.RarityLoot
                 "VoltunsSet", "PickaxeCopperCost", 15, "Copper required to craft Voltun's Pickaxe.");
             VoltunPickaxeBronzeCost = Config.Bind(
                 "VoltunsSet", "PickaxeBronzeCost", 5, "Bronze required to craft Voltun's Pickaxe.");
+
+            SkinningKnifeWoodCost = Config.Bind(
+                "SkinningKnife", "WoodCost", 3, "Wood required to craft a Skinning Knife.");
+            SkinningKnifeFlintCost = Config.Bind(
+                "SkinningKnife", "FlintCost", 3, "Flint required to craft a Skinning Knife.");
         }
 
         private void OnDestroy()

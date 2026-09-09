@@ -122,12 +122,42 @@ and levels is ours, with our own XP curves and level-gated effects.
       separate pass the same way Woodcutting/Mining's itemization lives
       in RarityLoot rather than here. Compiles clean. **Not yet tested
       in-game.**
-- [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining, and
-      Fishing now built)*. Gathering: Mining (built), Woodcutting (built),
-      Fishing (built),
-      Skinning. Production: Smithing, Cooking, Fletching, Building,
-      Crafting. Combat: Attack, Strength, Defense (broad OSRS-style stats, not
-      per-weapon-type like vanilla).
+- [x] **Skinning** ([SkillSystem/SkinningSkill.cs](../src/Core/SkillSystem/SkinningSkill.cs), [Patches/SkinningPatches.cs](../src/Core/Patches/SkinningPatches.cs), [Skinning Knife](../src/MiniMods/RarityLoot/Items/SkinningKnife.cs)) —
+      *(implemented, not yet runtime-tested — first-cut scope: Deer
+      only)*. Fourth skill, and the first with no vanilla equivalent at
+      all (confirmed against the full `Skills.SkillType` enum — no
+      "Skinning" entry), so no XP redirect is needed, just registration.
+      Matches vision.md's own framing directly: "action/flavor mechanic
+      first ... rather than designing deep level-gated bonuses right
+      away" — no per-level scaling code, all XP/bonus-yield comes free
+      from vanilla's own `Pickable` component
+      (`m_pickRaiseSkill`/`m_maxLevelBonusChance`, confirmed to accept a
+      Jotunn custom `SkillType` exactly like a vanilla one). The carcass
+      mechanic: a Prefix on `CharacterDrop.OnDeath` pulls the meat entry
+      out of a registered animal's drop list before it spawns, and
+      spawns a carcass (a cloned Pickable-based resource, reconfigured
+      with the animal's meat item and our skill) in its place — hide and
+      trophy are left untouched and still drop normally. A separate
+      Prefix on `Pickable.Interact`, scoped only to Pickable instances
+      this system itself spawned (tracked by reference, so it can't
+      affect unrelated mushrooms/berries), blocks harvesting without the
+      new Skinning Knife equipped (built alongside, in RarityLoot, per
+      `docs/PROGRESS.md`'s own note that it "pairs with Core's Skinning
+      work when that starts"). **Known first-cut limits:** only Deer is
+      registered (the registry makes adding Boar/Wolf/Neck later a
+      one-line call each, no new plumbing); multi-item carcasses (meat +
+      hide together) would need a custom container-based carcass instead
+      of reusing single-item `Pickable`, deferred rather than guessed at;
+      the carcass's visual is whatever the cloned base prefab looks like
+      (a placeholder, not real art). Same base-prefab-name verification
+      caveat as Stone Pickaxe/Voltun's Set. Compiles clean. **Not yet
+      tested in-game.**
+- [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
+      Fishing, and Skinning now built)*. Gathering: Mining (built),
+      Woodcutting (built), Fishing (built), Skinning (built). Production:
+      Smithing, Cooking, Fletching, Building, Crafting. Combat: Attack,
+      Strength, Defense (broad OSRS-style stats, not per-weapon-type like
+      vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
       efficiency for weapon use (the "higher Attack level, less stamina
       drain in combat" mechanic). Strength = single shared damage-scaling
@@ -135,14 +165,16 @@ and levels is ours, with our own XP curves and level-gated effects.
       resistance. No hit/miss roll — every swing connects like vanilla.
       **Note:** this stacks with ValheimQoL's flat stamina-drain reduction
       below — two separate, intentional layers, not overlapping ones.
-- [ ] **Gathering mechanics** — *(designed)*. Soft-gating principle:
-      access to a resource is never locked, only the payoff is. Mining
-      and Woodcutting share one mechanic (level → speed + damage to
-      ore/trees). Fishing keeps vanilla's cast/bait/reel feel, level
-      mainly scales catch chance; Fishing Rod craftable from level 1, no
-      Haldor dependency. Skinning: animal deaths leave a carcass, needs a
-      new Skinning Knife tool to harvest (flavor/immersion first, leveled
-      bonuses later).
+- [x] **Gathering mechanics** — *(all four built, none runtime-tested)*.
+      Soft-gating principle: access to a resource is never locked, only
+      the payoff is. Mining and Woodcutting share one mechanic (level →
+      speed + damage to ore/trees) — built. Fishing keeps vanilla's
+      cast/bait/reel feel, level mainly scales catch chance — built
+      (Fishing Rod craftable-from-level-1 / no-Haldor still open, it's a
+      recipe change not a mechanic). Skinning: animal deaths leave a
+      carcass, needs a new Skinning Knife tool to harvest (flavor/
+      immersion first, leveled bonuses later) — built for Deer only so
+      far, see the Pillar 1 entry above for scope.
 - [ ] **Smithing tier ladder** — *(designed, one open question)*. Normal
       gear stays as vanilla, no level gate. New Magic/Rare tiers sit
       between normal and the existing Legendary tier. Legendary crafting
@@ -247,12 +279,17 @@ scratch, tied into the skill system for level-gated crafting.
       failure mode if wrong: Jotunn logs a clear "could not resolve
       reference" error on load rather than failing silently. Compiles
       clean. **Not yet tested in-game — first thing to check Friday.**
-- [ ] **Skinning Knife** — *(designed, not built — intentionally
-      deferred)*. Required to harvest carcasses under the new Skinning
-      mechanic, but that mechanic is Core/Pillar 1 territory and Core is
-      still just a stub — building the knife item alone right now would
-      just be a prop with nothing to do. Pairs with Core's Skinning work
-      when that starts, not before.
+- [x] **Skinning Knife** ([Items/SkinningKnife.cs](../src/MiniMods/RarityLoot/Items/SkinningKnife.cs)) —
+      *(implemented, not yet runtime-tested)*. Built the moment Core's
+      Skinning mechanic landed, as planned here. Clones vanilla `Knife`,
+      craftable from Wood + Flint at a Workbench (config amounts) — no
+      boss-material requirement, matching Stone Pickaxe's philosophy.
+      Registered under a shared prefab-name constant
+      (`SkinningSkill.SkinningKnifePrefabName`) that Core's carcass
+      tool-gate check compares against, so the two can't drift out of
+      sync despite Core having no reference back to this item. See the
+      Pillar 1 Skinning entry above for the full picture. Compiles clean.
+      **Not yet tested in-game.**
 - [x] **Named-hero gear pattern** ([Patches/ItemRollTrigger.cs](../src/MiniMods/RarityLoot/Patches/ItemRollTrigger.cs)) —
       *(implemented generically)*. `ItemRollTrigger.Register` +
       `ItemRoller` work for any named set, not just Voltun's — a second
