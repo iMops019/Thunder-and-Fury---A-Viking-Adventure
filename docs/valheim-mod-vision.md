@@ -111,10 +111,18 @@ Build order (simple → complex):
   chopping, etc.) into our custom skills instead
 
 ## Status
-- Valheim 1.0 releases Sept 9, 2026
-- Iron Gate: no official mod support, no guarantee mods work at launch — BepInEx/Jotunn need to catch up first (days–weeks)
-- **This week:** design and planning groundwork
-- **Once tooling catches up:** start implementation
+- Valheim 1.0 released Sept 9, 2026. BepInEx/Jotunn worked against it
+  immediately — no compatibility wait needed in practice.
+- Implementation is well underway: ValheimQoL's full QoL layer, all 9
+  Gathering + Production skills (Mining, Woodcutting, Fishing, Skinning,
+  Smithing, Cooking, Fletching, Building, Crafting), and RarityLoot's
+  Stone Pickaxe/Voltun's Set/Skinning Knife are all implemented and
+  compile clean. Nothing has been runtime-tested yet — see
+  [PROGRESS.md](PROGRESS.md) for the authoritative per-feature status
+  (what's designed vs. built vs. confirmed working in-game).
+- Still open: the 3 Combat stats (Attack, Strength, Defense), Quests,
+  most of RarityLoot's rarity-tier mechanics for ordinary vanilla gear,
+  and everything in this doc's own Open Questions / Parking Lot below.
 
 ## Open Questions (need answers before coding starts)
 - How deep does "custom menus" go — full UI overhaul or additive panels?

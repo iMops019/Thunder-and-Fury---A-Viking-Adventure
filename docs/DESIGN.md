@@ -110,9 +110,21 @@ breaks one system's game hook doesn't take the others down with it.
       Steam Valheim folder, so Jotunn's auto-detection needs a
       `BEPINEX_PATH` env var pointed at that profile's `BepInEx` folder —
       see the README setup section.
-- [ ] Skill list + XP curves + per-level effects — see vision.md (mostly
-      decided; Cooking's special-recipe tier and a few milestones still open)
-- [ ] Rarity tiers + what a rarity roll grants — see vision.md open questions
+- [x] Skill list, XP, and per-level effects for all 9 Gathering +
+      Production skills (Mining, Woodcutting, Fishing, Skinning,
+      Smithing, Cooking, Fletching, Building, Crafting) — implemented,
+      not yet runtime-tested. Only the 3 Combat stats (Attack, Strength,
+      Defense) remain from vision.md's original skill list. Cooking's
+      special-recipe tier stays open (vision.md itself flags it as
+      unfleshed design space). See docs/PROGRESS.md for exact per-skill
+      scope and caveats — several skills deliberately ship with "nothing
+      designed beyond the name" (Fletching, Building, Crafting) rather
+      than inventing gameplay effects vision.md never specified.
+- [ ] Rarity tiers + what a rarity roll grants for *ordinary* vanilla
+      gear — see vision.md open questions. (The rolled-affix mechanism
+      itself is built and already used by Voltun's Set; what's still
+      undesigned is which vanilla items are eligible to roll Magic/Rare
+      and at what odds.)
 - [ ] Quest list + quest giver placement + reward structure — see vision.md
 - [ ] Weight slider range/defaults — ValheimQoL has working defaults
       (0.5x material weight, 2x stack size) already, tune later

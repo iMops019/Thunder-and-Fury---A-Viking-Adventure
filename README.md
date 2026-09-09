@@ -54,16 +54,30 @@ src/
                              reuses vanilla's own leveling curve),
                              shared UI theme, shared keybinds, shared
                              modifier registry. Everything else depends
-                             on this. Woodcutting is the first skill,
-                             built end-to-end; not yet runtime-tested.
+                             on this. All 9 Gathering + Production skills
+                             from vision.md's skill list are implemented —
+                             Mining, Woodcutting, Fishing, Skinning,
+                             Smithing, Cooking, Fletching, Building,
+                             Crafting — each reusing a real (often
+                             dormant) vanilla mechanic for XP/effects
+                             rather than inventing new systems where one
+                             already existed. Only the 3 Combat stats
+                             (Attack, Strength, Defense) remain from that
+                             list. None of it is runtime-tested yet — see
+                             docs/PROGRESS.md for exact per-skill status
+                             and scope caveats.
   MiniMods/
     ExampleMiniMod/         Template — copy this folder to start a new
                              mini-mod that depends on Core.
     RarityLoot/              Magic/Rare/Legendary item tiers. Depends on
                              Core. Generic rolled-affix framework
-                             implemented; Stone Pickaxe and Voltun's Set
-                             (Legendary) use it. Rolling ordinary vanilla
-                             gear into Magic/Rare is still undesigned.
+                             implemented (PoE-style, stored in vanilla's
+                             own per-item save data); Stone Pickaxe,
+                             Voltun's Set (Legendary, now level-gated by
+                             Smithing), and the Skinning Knife (paired
+                             with Core's Skinning skill) all use it.
+                             Rolling ordinary vanilla gear into Magic/Rare
+                             is still undesigned.
     Quests/                  Objective-based quests + quest giver NPC(s).
                              Depends on Core.
     ValheimQoL/              QoL pillar — every planned feature implemented
