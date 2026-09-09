@@ -184,14 +184,14 @@ and levels is ours, with our own XP curves and level-gated effects.
       (`SkinningCarcassVisualRotationX`/`Scale`) specifically because
       they'll need live tuning once actually seen in-game, not something
       to get right blind. Compiles clean. **Not yet tested in-game.**
-- [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
-      Fishing, Skinning, Smithing, Cooking, Fletching, and Building now
-      built)*. Gathering: Mining (built), Woodcutting (built), Fishing
-      (built), Skinning (built). Production: Smithing (built), Cooking
-      (built), Fletching (built, registration + XP split only, no
-      gameplay effects — nothing designed for those yet), Building
-      (built, registration only, matches vision.md's own "trivial"
-      framing), Crafting. Combat: Attack, Strength, Defense (broad
+- [ ] **Skill list** — *(designed, first pass; all Gathering + Production
+      skills now built, only Combat left)*. Gathering: Mining (built),
+      Woodcutting (built), Fishing (built), Skinning (built). Production:
+      Smithing (built), Cooking (built), Fletching (built, registration +
+      XP split only, no gameplay effects — nothing designed for those
+      yet), Building (built, registration only, matches vision.md's own
+      "trivial" framing), Crafting (built, redirect-only catch-all for
+      vanilla's generic Crafting skill). Combat: Attack, Strength, Defense (broad
       OSRS-style stats, not
       per-weapon-type like vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
@@ -246,6 +246,9 @@ and levels is ours, with our own XP curves and level-gated effects.
       needed to do. **Boundary fix while wiring up Fletching:** the
       Workbench (shared with bow/arrow crafting) now correctly excludes
       Fletching's items from Smithing XP — see the Fletching entry below.
+      **Follow-up closed by Crafting (below):** the generic vanilla
+      `Crafting` SkillType redirect this entry originally deferred (no
+      destination skill existed yet) is now wired up.
       Compiles clean. **Not yet tested in-game.**
 - [x] **Cooking** ([SkillSystem/CookingSkill.cs](../src/Core/SkillSystem/CookingSkill.cs), [Patches/CookingPatches.cs](../src/Core/Patches/CookingPatches.cs)) —
       *(implemented, not yet runtime-tested — burn-chance half done,
@@ -328,6 +331,28 @@ and levels is ours, with our own XP curves and level-gated effects.
       anything (building is never locked), just the same free bonus
       every other reused-mechanism skill gets, left as-is rather than
       suppressed. Compiles clean. **Not yet tested in-game.**
+- [x] **Crafting** ([SkillSystem/CraftingSkill.cs](../src/Core/SkillSystem/CraftingSkill.cs)) —
+      *(implemented, not yet runtime-tested)*. Tenth and final skill from
+      vision.md's original skill list, and like Fletching/Building, given
+      zero dedicated design beyond its name. Unlike those two, though,
+      this had an obvious, low-risk role given everything already built:
+      vanilla's `Skills.SkillType.Crafting` is the DEFAULT value of
+      `CraftingStation.m_craftingSkill` in code, meaning any station this
+      mod hasn't explicitly touched (Stonecutter, Artisan Table, Mead
+      Ketill, Food Preparation Table, etc.) already grants that vanilla
+      skill XP for whatever's made there. Redirected it here — the same
+      mechanism as Woodcutting/Pickaxes/Fishing/Cooking — making this
+      skill the natural catch-all for "everything produced at a station
+      Smithing/Fletching/Building didn't explicitly claim," matching the
+      OSRS shape of Crafting as the broad generic skill alongside more
+      specialized ones. This closes the loop on Smithing's own
+      deliberately-deferred decision not to touch that redirect — there
+      wasn't a leak risk back then, just no destination skill registered
+      yet for it to redirect into. No custom gameplay effects, same
+      "nothing designed beyond the name" scope as Fletching and Building.
+      **All 9 Gathering + Production skills are now built** — only the 3
+      Combat stats (Attack, Strength, Defense) remain from vision.md's
+      original skill list. Compiles clean. **Not yet tested in-game.**
 - [ ] **Progression principle** — *(designed)*. Smooth XP curve plus real
       milestone unlocks layered on top (new recipe/drop chance/tool
       tier/passive at specific levels) so leveling has concrete payoffs.
