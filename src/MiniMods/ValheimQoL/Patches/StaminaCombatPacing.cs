@@ -14,14 +14,20 @@ namespace ValheimQoL.Patches
         }
     }
 
-    // Stamina REGEN isn't a single clean entry point the way drain is — it's
-    // calculated inside Character's per-frame update, mixed in with health
-    // regen and status-effect checks, and the method name has moved between
-    // Valheim versions. Rather than guess a name that might not exist in the
-    // 1.0 build and hand you code that silently fails to compile, this is
-    // left as a flagged TODO — first thing to nail down once we can see the
-    // actual 1.0 decompile.
-    //
-    // [HarmonyPatch(typeof(Character), "MethodNameTBD")]
-    // public static class StaminaRegenPatch { ... }
+    // Stamina regen's actual formula lives inline inside Player.UpdateStats,
+    // mixed in with food/adrenaline updates — not independently patchable.
+    // But confirmed against the real 1.0 decompile: the base rate it reads
+    // from, Player.m_staminaRegen, is a plain public field set once in
+    // Player's constructor (default 5f) — same story as BuildingSnap's
+    // m_maxPlaceDistance. A constructor Postfix is enough, no Transpiler
+    // needed despite what this file used to assume before the decompile
+    // was available.
+    [HarmonyPatch(typeof(Player), MethodType.Constructor)]
+    public static class StaminaRegenPatch
+    {
+        static void Postfix(Player __instance)
+        {
+            __instance.m_staminaRegen *= ValheimQoLPlugin.StaminaRegenMultiplier.Value;
+        }
+    }
 }

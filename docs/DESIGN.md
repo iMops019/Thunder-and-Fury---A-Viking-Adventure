@@ -66,6 +66,23 @@ template and the package's own `build/*.props`:
   (`ExcludeAssets=runtime` on the `PackageReference`) since it's meant to
   be a single shared runtime install (`BepInEx/plugins/Jotunn/`), not
   bundled redundantly inside every mod's own output folder.
+- **Decompiling the real game code, confirmed working (2026-09-09):**
+  `dotnet tool install -g ilspycmd` (ICSharpCode decompiler) against
+  `assembly_valheim_publicized.dll` in the same
+  `publicized_assemblies` folder the prebuild task generates.
+  `ilspycmd -t <TypeName> <dll>` dumps one class to readable (if
+  Unity-boilerplate-heavy) C#. This is how every ValheimQoL patch got
+  written — e.g. finding that `Player.m_maxPlaceDistance` and
+  `Player.m_staminaRegen` are plain public fields set in the constructor
+  (patchable with a Harmony constructor Postfix), and that
+  `Player.FindClosestSnapPoints`'s `maxSnapDistance` is a normal method
+  parameter (patchable with a Prefix using `ref float` — Harmony allows
+  `ref` on a patch parameter to mutate a non-ref original parameter
+  before the original body runs). None of the four originally-stubbed
+  QoL patches (`BuildingSnap`, `AutoPickupSort`, `QuickSlots`,
+  `CraftFromContainers`) turned out to need a Transpiler, contrary to
+  their pre-decompile guesses — worth checking the real code before
+  assuming something needs one.
 
 ## Mod split (as scaffolded)
 
@@ -87,8 +104,12 @@ breaks one system's game hook doesn't take the others down with it.
 - [x] Toolchain validated end-to-end against the real local install: game
       assemblies resolve, publicized assemblies generate successfully,
       only failure remaining is the not-yet-installed BepInEx (expected).
-- [ ] BepInEx installed into the Valheim folder (needed for a full green
-      build) — install via r2modman or the Thunderstore app.
+- [x] BepInEx installed via Thunderstore Mod Manager and a full green
+      build confirmed (`dotnet build -m:1`, 0 errors, all 5 projects).
+      Mod-manager installs live in a per-profile folder rather than the
+      Steam Valheim folder, so Jotunn's auto-detection needs a
+      `BEPINEX_PATH` env var pointed at that profile's `BepInEx` folder —
+      see the README setup section.
 - [ ] Skill list + XP curves + per-level effects — see vision.md (mostly
       decided; Cooking's special-recipe tier and a few milestones still open)
 - [ ] Rarity tiers + what a rarity roll grants — see vision.md open questions

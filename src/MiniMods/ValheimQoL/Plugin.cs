@@ -1,6 +1,7 @@
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using UnityEngine;
 
 namespace ValheimQoL
 {
@@ -19,6 +20,11 @@ namespace ValheimQoL
         public static ConfigEntry<float> StaminaDrainMultiplier;
         public static ConfigEntry<float> StaminaRegenMultiplier;
         public static ConfigEntry<float> BuildSnapTolerance;
+        public static ConfigEntry<float> PlaceDistanceMultiplier;
+        public static ConfigEntry<float> AutoPickupRangeMultiplier;
+        public static ConfigEntry<KeyboardShortcut> SortInventoryKey;
+        public static ConfigEntry<KeyboardShortcut>[] QuickSlotKeys;
+        public static ConfigEntry<float> CraftFromContainersRadius;
 
         private void Awake()
         {
@@ -50,6 +56,34 @@ namespace ValheimQoL
             BuildSnapTolerance = Config.Bind(
                 "Building", "SnapTolerance", 1.5f,
                 "Multiplier on how forgiving snap-point placement is. 1.0 = vanilla.");
+
+            PlaceDistanceMultiplier = Config.Bind(
+                "Building", "PlaceDistanceMultiplier", 1.5f,
+                "Multiplier on how far from the player pieces can be placed. Vanilla max is 5m. 1.0 = vanilla.");
+
+            AutoPickupRangeMultiplier = Config.Bind(
+                "Inventory", "AutoPickupRangeMultiplier", 1.5f,
+                "Multiplier on vanilla's auto-pickup sweep radius. Vanilla range is 2m. 1.0 = vanilla.");
+
+            SortInventoryKey = Config.Bind(
+                "Inventory", "SortInventoryKey", new KeyboardShortcut(KeyCode.S, KeyCode.LeftAlt),
+                "Hotkey to sort/stack-merge the inventory grid. Only works while the inventory screen is open.");
+
+            QuickSlotKeys = new[]
+            {
+                Config.Bind("QuickSlots", "Slot1Key", new KeyboardShortcut(KeyCode.F1),
+                    "Use/equip whatever's assigned to quick slot 1. Hold Ctrl + this key while holding an item in the inventory screen to assign it."),
+                Config.Bind("QuickSlots", "Slot2Key", new KeyboardShortcut(KeyCode.F2),
+                    "Use/equip whatever's assigned to quick slot 2. Hold Ctrl + this key while holding an item in the inventory screen to assign it."),
+                Config.Bind("QuickSlots", "Slot3Key", new KeyboardShortcut(KeyCode.F3),
+                    "Use/equip whatever's assigned to quick slot 3. Hold Ctrl + this key while holding an item in the inventory screen to assign it."),
+                Config.Bind("QuickSlots", "Slot4Key", new KeyboardShortcut(KeyCode.F4),
+                    "Use/equip whatever's assigned to quick slot 4. Hold Ctrl + this key while holding an item in the inventory screen to assign it."),
+            };
+
+            CraftFromContainersRadius = Config.Bind(
+                "Crafting", "CraftFromContainersRadius", 10f,
+                "Radius (meters) around the player to pull crafting/building materials from nearby chests. 0 disables.");
         }
 
         private void OnDestroy()
