@@ -31,6 +31,9 @@ namespace VikingAdventure.Core
         public static ConfigEntry<float> WoodcuttingMilestoneXpMultiplier;
         public static ConfigEntry<float> WoodcuttingMilestoneLogYieldBonusPercent;
 
+        public static ConfigEntry<float> MiningDamagePerLevel;
+        public static ConfigEntry<float> MiningStaminaEfficiencyWeight;
+
         private void Awake()
         {
             BindConfig();
@@ -38,6 +41,7 @@ namespace VikingAdventure.Core
             _harmony.PatchAll();
 
             PrefabManager.OnVanillaPrefabsAvailable += WoodcuttingSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += MiningSkill.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
@@ -63,6 +67,14 @@ namespace VikingAdventure.Core
             WoodcuttingMilestoneLogYieldBonusPercent = Config.Bind(
                 "Woodcutting", "MilestoneLogYieldBonusPercent", 25f,
                 "Extra Wood dropped per chopped log once the milestone level is reached, as a percentage. 25 = +25% more Wood.");
+
+            MiningDamagePerLevel = Config.Bind(
+                "Mining", "DamagePerLevel", 0.01f,
+                "Extra mining damage per Mining level, as a fraction. 0.01 = +1% per level, so level 50 = +50%.");
+
+            MiningStaminaEfficiencyWeight = Config.Bind(
+                "Mining", "StaminaEfficiencyWeight", 0.33f,
+                "How much Mining level reduces pickaxe stamina cost, at level 100 (max skill). Same mechanic and reasoning as Woodcutting's stand-in for \"speed\" -- see WoodcuttingPatches.cs.");
         }
 
         private void OnDestroy()

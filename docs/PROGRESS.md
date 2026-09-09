@@ -68,10 +68,24 @@ and levels is ours, with our own XP curves and level-gated effects.
       LogYieldPatch, reimplemented here rather than shared since Core
       can't depend on RarityLoot. Compiles clean. **Not yet tested
       in-game.**
-- [ ] **Skill list** — *(designed, first pass; Woodcutting now built)*.
-      Gathering: Mining, Woodcutting (built), Fishing, Skinning.
-      Production: Smithing, Cooking, Fletching, Building, Crafting.
-      Combat: Attack, Strength, Defense (broad OSRS-style stats, not
+- [x] **Mining** ([SkillSystem/MiningSkill.cs](../src/Core/SkillSystem/MiningSkill.cs), [Patches/MiningPatches.cs](../src/Core/Patches/MiningPatches.cs)) —
+      *(implemented, not yet runtime-tested)*. Second skill, same proven
+      pattern as Woodcutting — registration, XP redirect (vanilla
+      `Pickaxes` → ours, hidden from the skill list), per-level ore
+      damage scaling, and the same stamina-efficiency "speed" stand-in.
+      One wrinkle Woodcutting didn't have: ore/rock damage flows through
+      two different vanilla components depending on rock type —
+      `MineRock5.RPC_Damage` (newer, multi-hit-area rocks) and
+      `MineRock.RPC_Hit` (older, single-area) — both patched to cover
+      every ore node. **No milestone** — unlike Woodcutting's level-15
+      bonus, vision.md never designed a concrete Mining milestone, so
+      nothing was invented; just the shared "level → speed + damage to
+      ore/trees" gathering mechanic vision.md explicitly names for both
+      skills. Compiles clean. **Not yet tested in-game.**
+- [ ] **Skill list** — *(designed, first pass; Woodcutting + Mining now
+      built)*. Gathering: Mining (built), Woodcutting (built), Fishing,
+      Skinning. Production: Smithing, Cooking, Fletching, Building,
+      Crafting. Combat: Attack, Strength, Defense (broad OSRS-style stats, not
       per-weapon-type like vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
       efficiency for weapon use (the "higher Attack level, less stamina
