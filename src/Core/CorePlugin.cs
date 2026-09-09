@@ -44,6 +44,10 @@ namespace ThunderFury.Core
         public static ConfigEntry<float> CookingBurnPreventionChanceAtMaxLevel;
         public static ConfigEntry<float> CookingBurnPreventionRadius;
 
+        public static ConfigEntry<float> StrengthXpShareOfAttack;
+        public static ConfigEntry<float> DefenseDamageReductionPerLevel;
+        public static ConfigEntry<float> DefenseMinDamageMultiplier;
+
         private void Awake()
         {
             BindConfig();
@@ -60,6 +64,9 @@ namespace ThunderFury.Core
             PrefabManager.OnVanillaPrefabsAvailable += FletchingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += BuildingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += CraftingSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += AttackSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += StrengthSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += DefenseSkill.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
@@ -117,6 +124,18 @@ namespace ThunderFury.Core
             CookingBurnPreventionRadius = Config.Bind(
                 "Cooking", "BurnPreventionRadius", 10f,
                 "Radius (meters) around a cooking station to find the player whose Cooking level applies -- there's no per-slot ownership tracked by vanilla, so this uses the closest player, same approximation Fishing uses for bite chance.");
+
+            StrengthXpShareOfAttack = Config.Bind(
+                "Strength", "XpShareOfAttack", 1f,
+                "Fraction of Attack's XP that Strength also gains from the same weapon hit. 1.0 = Strength levels at the same rate as Attack.");
+
+            DefenseDamageReductionPerLevel = Config.Bind(
+                "Defense", "DamageReductionPerLevel", 0.01f,
+                "Incoming damage reduction per Defense level, as a fraction. 0.01 = -1% per level, so level 50 = -50% (before the floor below applies).");
+
+            DefenseMinDamageMultiplier = Config.Bind(
+                "Defense", "MinDamageMultiplier", 0.1f,
+                "Floor on the damage multiplier DefenseDamageReductionPerLevel can reach, so high Defense can't be tuned into literal invincibility. 0.1 = incoming damage can never be reduced below 10% of its original value.");
         }
 
         private void OnDestroy()

@@ -54,18 +54,16 @@ src/
                              reuses vanilla's own leveling curve),
                              shared UI theme, shared keybinds, shared
                              modifier registry. Everything else depends
-                             on this. All 9 Gathering + Production skills
-                             from vision.md's skill list are implemented —
-                             Mining, Woodcutting, Fishing, Skinning,
-                             Smithing, Cooking, Fletching, Building,
-                             Crafting — each reusing a real (often
-                             dormant) vanilla mechanic for XP/effects
-                             rather than inventing new systems where one
-                             already existed. Only the 3 Combat stats
-                             (Attack, Strength, Defense) remain from that
-                             list. None of it is runtime-tested yet — see
-                             docs/PROGRESS.md for exact per-skill status
-                             and scope caveats.
+                             on this. All 12 skills from vision.md's skill
+                             list are implemented — Mining, Woodcutting,
+                             Fishing, Skinning, Smithing, Cooking,
+                             Fletching, Building, Crafting, Attack,
+                             Strength, Defense — each reusing a real
+                             (often dormant) vanilla mechanic for
+                             XP/effects rather than inventing new systems
+                             where one already existed. None of it is
+                             runtime-tested yet — see docs/PROGRESS.md for
+                             exact per-skill status and scope caveats.
   MiniMods/
     ExampleMiniMod/         Template — copy this folder to start a new
                              mini-mod that depends on Core.

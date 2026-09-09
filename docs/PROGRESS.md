@@ -184,23 +184,63 @@ and levels is ours, with our own XP curves and level-gated effects.
       (`SkinningCarcassVisualRotationX`/`Scale`) specifically because
       they'll need live tuning once actually seen in-game, not something
       to get right blind. Compiles clean. **Not yet tested in-game.**
-- [ ] **Skill list** — *(designed, first pass; all Gathering + Production
-      skills now built, only Combat left)*. Gathering: Mining (built),
+- [x] **Skill list** — *(designed, first pass; all 12 skills from
+      vision.md's original list now built)*. Gathering: Mining (built),
       Woodcutting (built), Fishing (built), Skinning (built). Production:
       Smithing (built), Cooking (built), Fletching (built, registration +
       XP split only, no gameplay effects — nothing designed for those
       yet), Building (built, registration only, matches vision.md's own
       "trivial" framing), Crafting (built, redirect-only catch-all for
-      vanilla's generic Crafting skill). Combat: Attack, Strength, Defense (broad
-      OSRS-style stats, not
-      per-weapon-type like vanilla).
-- [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
-      efficiency for weapon use (the "higher Attack level, less stamina
-      drain in combat" mechanic). Strength = single shared damage-scaling
-      stat across all weapons. Defense = damage reduction / stagger
-      resistance. No hit/miss roll — every swing connects like vanilla.
-      **Note:** this stacks with ValheimQoL's flat stamina-drain reduction
-      below — two separate, intentional layers, not overlapping ones.
+      vanilla's generic Crafting skill). Combat: Attack, Strength, Defense
+      (built — broad OSRS-style stats, not per-weapon-type like vanilla;
+      see the Combat stats entry below).
+- [x] **Combat stats** ([SkillSystem/AttackSkill.cs](../src/Core/SkillSystem/AttackSkill.cs), [SkillSystem/StrengthSkill.cs](../src/Core/SkillSystem/StrengthSkill.cs), [SkillSystem/DefenseSkill.cs](../src/Core/SkillSystem/DefenseSkill.cs), [Patches/CombatPatches.cs](../src/Core/Patches/CombatPatches.cs)) —
+      *(implemented, not yet runtime-tested)*. Eleventh/twelfth/thirteenth
+      skills, and the last of vision.md's original skill list. Confirmed
+      against the real 1.0 decompile: vanilla splits weapon use across 9
+      separate `Skills.SkillType` entries (Swords, Knives, Clubs,
+      Polearms, Spears, Axes, Bows, Crossbows, Unarmed) —
+      `AttackSkill.WeaponSkillTypes` is that full set, every one
+      redirected into the single **Attack** skill via the same
+      `SkillXpRedirect` architecture every other skill uses. **Attack**'s
+      tempo half (attack-speed/stamina-efficiency) comes free from the
+      existing generic `GetSkillFactorRedirectPatch` — no new patch
+      needed, same as Woodcutting/Mining's "speed." **Strength** (damage
+      output) has no vanilla skill of its own to redirect from: confirmed
+      `Attack.cs`'s hit paths scale outgoing damage through
+      `Character.GetRandomSkillFactor(weapon's skill type)`, which
+      forwards to `Skills.GetRandomSkillFactor` — that method calls
+      `Skills.GetSkillFactor` internally (not `Player.GetSkillFactor`),
+      so it's a genuinely separate vanilla code path from Attack's tempo
+      formula, already split exactly the way vision.md wants without any
+      extra plumbing. `StrengthDamageFactorPatch` substitutes Strength's
+      level into that same vanilla shape
+      (`Lerp(0.4, 1, level/100) +/- 0.15` random); `StrengthXpSharePatch`
+      is a second, independent `Player.RaiseSkill` Prefix (same
+      multiple-prefixes-coexist pattern Fletching's redirect already
+      proved out) granting Strength XP alongside Attack for the same hit,
+      config-tunable share (`StrengthXpShareOfAttack`, default 1.0 = same
+      rate as Attack). **Defense** redirects vanilla's `Blocking` skill —
+      confirmed `Humanoid.BlockAttack` reads
+      `GetSkillFactor(Skills.SkillType.Blocking)` to scale block power,
+      and unlike Strength's case that call *does* go through
+      `Player.GetSkillFactor`, so the redirect alone gives "better
+      blocking = better block power/stagger resistance" for free. General
+      (not just block) damage reduction is a new patch,
+      `DefenseDamageReductionPatch`, a Prefix on `Character.RPC_Damage`
+      (scoped to the player being hit) that scales `HitData.m_damage`
+      down before vanilla's own armor/resistance runs — same field list
+      Woodcutting/Mining's damage-up patches already touch, just inverted,
+      and since `HitData.GetTotalStaggerDamage()` reads those same fields
+      this covers vision.md's "damage reduction and/or stagger
+      resistance" with one mechanism. Floor-clamped
+      (`DefenseMinDamageMultiplier`, default 0.1) so high Defense can't be
+      tuned into literal invincibility, unlike the symmetric damage-up
+      skills which have no such ceiling risk. No hit/miss roll anywhere —
+      every swing connects like vanilla, matching vision.md. **Note:**
+      Attack's stamina-efficiency effect stacks with ValheimQoL's flat
+      stamina-drain reduction — two separate, intentional layers, not
+      overlapping ones. Compiles clean. **Not yet tested in-game.**
 - [x] **Gathering mechanics** — *(all four built, none runtime-tested)*.
       Soft-gating principle: access to a resource is never locked, only
       the payoff is. Mining and Woodcutting share one mechanic (level →
@@ -350,9 +390,10 @@ and levels is ours, with our own XP curves and level-gated effects.
       wasn't a leak risk back then, just no destination skill registered
       yet for it to redirect into. No custom gameplay effects, same
       "nothing designed beyond the name" scope as Fletching and Building.
-      **All 9 Gathering + Production skills are now built** — only the 3
-      Combat stats (Attack, Strength, Defense) remain from vision.md's
-      original skill list. Compiles clean. **Not yet tested in-game.**
+      **All 9 Gathering + Production skills were built this session** —
+      Combat (Attack, Strength, Defense) followed right after, closing out
+      all 12 skills from vision.md's original skill list; see the Combat
+      stats entry below. Compiles clean. **Not yet tested in-game.**
 - [ ] **Progression principle** — *(designed)*. Smooth XP curve plus real
       milestone unlocks layered on top (new recipe/drop chance/tool
       tier/passive at specific levels) so leveling has concrete payoffs.
