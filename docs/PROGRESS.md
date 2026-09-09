@@ -185,12 +185,14 @@ and levels is ours, with our own XP curves and level-gated effects.
       they'll need live tuning once actually seen in-game, not something
       to get right blind. Compiles clean. **Not yet tested in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
-      Fishing, Skinning, Smithing, Cooking, and Fletching now built)*.
-      Gathering: Mining (built), Woodcutting (built), Fishing (built),
-      Skinning (built). Production: Smithing (built), Cooking (built),
-      Fletching (built, registration + XP split only, no gameplay
-      effects — nothing designed for those yet), Building, Crafting.
-      Combat: Attack, Strength, Defense (broad OSRS-style stats, not
+      Fishing, Skinning, Smithing, Cooking, Fletching, and Building now
+      built)*. Gathering: Mining (built), Woodcutting (built), Fishing
+      (built), Skinning (built). Production: Smithing (built), Cooking
+      (built), Fletching (built, registration + XP split only, no
+      gameplay effects — nothing designed for those yet), Building
+      (built, registration only, matches vision.md's own "trivial"
+      framing), Crafting. Combat: Attack, Strength, Defense (broad
+      OSRS-style stats, not
       per-weapon-type like vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
       efficiency for weapon use (the "higher Attack level, less stamina
@@ -304,9 +306,28 @@ and levels is ours, with our own XP curves and level-gated effects.
       reclassified as Fletching instead; everything else crafted at
       Workbench/Forge/Black Forge still goes to Smithing untouched.
       Compiles clean. **Not yet tested in-game.**
-- [ ] **Building** — *(designed, trivial)*. Not gated behind a
-      level at all, stays open like vanilla. May exist as a nominal skill
-      with no functional effect.
+- [x] **Building** ([SkillSystem/BuildingSkill.cs](../src/Core/SkillSystem/BuildingSkill.cs)) —
+      *(implemented, not yet runtime-tested)*. Ninth skill, matches
+      vision.md's own "trivial" framing exactly — not gated behind a
+      level at all, registration only, no custom gameplay code written.
+      No vanilla equivalent to redirect from, but confirmed against the
+      real 1.0 decompile: `Player` already has a fully generic "raise
+      this skill when placing a piece from this table" mechanism right
+      after a successful `TryPlacePiece`
+      (`if (m_buildPieces.m_skill != None) RaiseSkill(m_buildPieces.m_skill)`),
+      unused by any vanilla `PieceTable` — same reuse pattern as
+      Skinning's `Pickable.m_pickRaiseSkill` and Smithing's
+      `CraftingStation.m_craftingSkill`. Set directly on the Hammer's
+      piece table only (`_HammerPieceTable`) — structural building, not
+      the Cultivator (terraforming is a separate, explicitly
+      not-yet-designed feature per vision.md's own Parking Lot). One
+      incidental, accepted side effect: `Player.GetBuildStamina()`
+      already reduces hammer-swing stamina cost by
+      `0.5 * GetSkillFactor(m_buildPieces.m_skill)`, the same
+      "efficiency" pattern Woodcutting/Mining reuse — not a gate on
+      anything (building is never locked), just the same free bonus
+      every other reused-mechanism skill gets, left as-is rather than
+      suppressed. Compiles clean. **Not yet tested in-game.**
 - [ ] **Progression principle** — *(designed)*. Smooth XP curve plus real
       milestone unlocks layered on top (new recipe/drop chance/tool
       tier/passive at specific levels) so leveling has concrete payoffs.

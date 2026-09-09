@@ -58,6 +58,7 @@ namespace VikingAdventure.Core
             PrefabManager.OnVanillaPrefabsAvailable += SmithingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += CookingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += FletchingSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += BuildingSkill.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
