@@ -17,9 +17,11 @@ namespace VikingAdventure.Core.SkillSystem
     // every skill built on Core routes through this same redirect, not a
     // one-off patch per skill.
     //
-    // Note: only the XP-neutralizing half is handled here. Hiding the
-    // vanilla skill from the in-game skill list UI is a separate, real UI
-    // patch that hasn't been researched yet -- Pillar 2 territory.
+    // Registering a vanilla SkillType here also hides it from the in-game
+    // skill list (see HideRedirectedSkillsPatch below) -- one
+    // registration call does both halves of "neutralized and hidden"
+    // (vision.md), since hiding is really just "don't show a skill we've
+    // already made permanently frozen."
     public static class SkillXpRedirect
     {
         public class Entry
@@ -43,6 +45,11 @@ namespace VikingAdventure.Core.SkillSystem
         {
             return Map.TryGetValue(vanillaType, out entry);
         }
+
+        public static bool IsRedirected(global::Skills.SkillType vanillaType)
+        {
+            return Map.ContainsKey(vanillaType);
+        }
     }
 
     [HarmonyPatch(typeof(Player), nameof(Player.RaiseSkill))]
@@ -55,6 +62,22 @@ namespace VikingAdventure.Core.SkillSystem
             float adjusted = entry.AdjustXp != null ? entry.AdjustXp(__instance, value) : value;
             __instance.GetSkills().RaiseSkill(entry.CustomType, adjusted);
             return false;
+        }
+    }
+
+    // Confirmed against the real 1.0 decompile: every consumer of "what
+    // skills does this player have" -- SkillsDialog's UI list included --
+    // goes through Skills.GetSkillList(), which builds a fresh
+    // List<Skills.Skill> from internal storage on every call. Filtering
+    // redirected (neutralized) skills out of that list here hides them
+    // everywhere at once, rather than needing a patch on the dialog
+    // itself or any other future consumer of the list.
+    [HarmonyPatch(typeof(global::Skills), nameof(global::Skills.GetSkillList))]
+    public static class HideRedirectedSkillsPatch
+    {
+        static void Postfix(List<global::Skills.Skill> __result)
+        {
+            __result.RemoveAll(skill => SkillXpRedirect.IsRedirected(skill.m_info.m_skill));
         }
     }
 }

@@ -23,7 +23,7 @@ own skills feel — vanilla skills stay technically present (engine needs
 them) but are neutralized and hidden; every skill the player actually sees
 and levels is ours, with our own XP curves and level-gated effects.
 
-- [ ] **Custom skill system architecture** — *(core pattern proven on one
+- [x] **Custom skill system architecture** — *(core pattern proven on one
       skill, not yet generalized to the other 8 — not yet runtime-tested)*.
       `SkillSystem/SkillXpRedirect.cs`: a generic Prefix on
       `Player.RaiseSkill` (confirmed the real single choke point every XP
@@ -35,22 +35,39 @@ and levels is ours, with our own XP curves and level-gated effects.
       own leveling curve (confirmed from the decompile:
       `Mathf.Pow(level+1, 1.5) * 0.5 + 0.5`) rather than needing a
       bespoke one — satisfies vision.md's "smooth, no artificial walls"
-      for free. **Not done:** hiding vanilla skills from the in-game
-      skill list UI — real UI work, not yet researched, Pillar 2
-      territory.
+      for free. Vanilla skills are now also hidden from the in-game skill
+      list: confirmed every consumer of "what skills does this player
+      have" (the skill list UI included) goes through
+      `Skills.GetSkillList()`, which builds a fresh list from internal
+      storage every call — a Postfix there filters out anything
+      registered as redirected, so registering a skill's XP redirect
+      hides it too, one call does both halves of "neutralized and
+      hidden."
 - [x] **Woodcutting** ([SkillSystem/WoodcuttingSkill.cs](../src/Core/SkillSystem/WoodcuttingSkill.cs), [Patches/WoodcuttingPatches.cs](../src/Core/Patches/WoodcuttingPatches.cs)) —
       *(implemented end-to-end, not yet runtime-tested)*. First skill,
       proving the whole loop: registration, XP redirect (vanilla
-      WoodCutting → ours), per-level tree/log damage scaling (config:
-      +1%/level default — confirmed `TreeBase`/`TreeLog.RPC_Damage` both
-      process hits through the same `HitData.m_damage` struct, scaled in
-      a Prefix), and the level-15 milestone (2x XP + 25% bonus log yield,
-      config levels/amounts — the yield half reuses the log-drop-table
-      research from RarityLoot's LogYieldPatch, reimplemented here rather
-      than shared since Core can't depend on RarityLoot). **Not done:**
-      chop SPEED scaling — vision.md's other half of "level increases
-      speed + damage" — needs the real attack-speed-application hook,
-      not yet researched. Compiles clean. **Not yet tested in-game.**
+      WoodCutting → ours, and now hidden from the skill list UI too), and
+      per-level tree/log damage scaling (config: +1%/level default —
+      confirmed `TreeBase`/`TreeLog.RPC_Damage` both process hits through
+      the same `HitData.m_damage` struct, scaled in a Prefix). Chop SPEED
+      researched and implemented: vanilla has no literal
+      swing-animation-speed stat at all (melee timing is baked into each
+      weapon's animation clip, not a scriptable number, and hacking
+      `Animator.speed` directly risks desyncing the networked hit-trigger
+      timing) — instead, confirmed `Attack.GetAttackStamina()` already
+      reduces stamina cost per swing by
+      `0.33 * GetSkillFactor(weapon's skill type)`, vanilla's own
+      "skill = efficiency" mechanic, just dead now since our redirect
+      freezes vanilla WoodCutting. A Postfix adds the same style of
+      reduction back sourced from our skill instead (config weight,
+      default 0.33 matching vanilla) — more chops per stamina bar, and
+      the same "efficiency" framing vision.md itself already uses for the
+      future Attack skill, so not a one-off reinterpretation. Level-15
+      milestone (2x XP + 25% bonus log yield, config levels/amounts) —
+      the yield half reuses the log-drop-table research from RarityLoot's
+      LogYieldPatch, reimplemented here rather than shared since Core
+      can't depend on RarityLoot. Compiles clean. **Not yet tested
+      in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting now built)*.
       Gathering: Mining, Woodcutting (built), Fishing, Skinning.
       Production: Smithing, Cooking, Fletching, Building, Crafting.

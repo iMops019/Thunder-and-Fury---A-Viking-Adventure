@@ -26,6 +26,7 @@ namespace VikingAdventure.Core
         private readonly Harmony _harmony = new Harmony(PluginGUID);
 
         public static ConfigEntry<float> WoodcuttingDamagePerLevel;
+        public static ConfigEntry<float> WoodcuttingStaminaEfficiencyWeight;
         public static ConfigEntry<int> WoodcuttingMilestoneLevel;
         public static ConfigEntry<float> WoodcuttingMilestoneXpMultiplier;
         public static ConfigEntry<float> WoodcuttingMilestoneLogYieldBonusPercent;
@@ -46,6 +47,10 @@ namespace VikingAdventure.Core
             WoodcuttingDamagePerLevel = Config.Bind(
                 "Woodcutting", "DamagePerLevel", 0.01f,
                 "Extra chop damage per Woodcutting level, as a fraction. 0.01 = +1% per level, so level 50 = +50%.");
+
+            WoodcuttingStaminaEfficiencyWeight = Config.Bind(
+                "Woodcutting", "StaminaEfficiencyWeight", 0.33f,
+                "How much Woodcutting level reduces chop stamina cost, at level 100 (max skill). 0.33 = -33% at level 100, matching vanilla's own equivalent formula for other skills. This is Woodcutting's stand-in for \"speed\": more chops per stamina bar rather than a faster swing animation -- see WoodcuttingPatches.cs for why.");
 
             WoodcuttingMilestoneLevel = Config.Bind(
                 "Woodcutting", "MilestoneLevel", 15,
