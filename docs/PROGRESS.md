@@ -185,11 +185,11 @@ and levels is ours, with our own XP curves and level-gated effects.
       they'll need live tuning once actually seen in-game, not something
       to get right blind. Compiles clean. **Not yet tested in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
-      Fishing, Skinning, and Smithing now built)*. Gathering: Mining
-      (built), Woodcutting (built), Fishing (built), Skinning (built).
-      Production: Smithing (built), Cooking, Fletching, Building,
-      Crafting. Combat: Attack, Strength, Defense (broad OSRS-style
-      stats, not per-weapon-type like vanilla).
+      Fishing, Skinning, Smithing, and Cooking now built)*. Gathering:
+      Mining (built), Woodcutting (built), Fishing (built), Skinning
+      (built). Production: Smithing (built), Cooking (built), Fletching,
+      Building, Crafting. Combat: Attack, Strength, Defense (broad
+      OSRS-style stats, not per-weapon-type like vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
       efficiency for weapon use (the "higher Attack level, less stamina
       drain in combat" mechanic). Strength = single shared damage-scaling
@@ -240,15 +240,42 @@ and levels is ours, with our own XP curves and level-gated effects.
       undesigned "which items, what odds" question flagged under
       RarityLoot's own Pillar 3 entry, unrelated to what Smithing itself
       needed to do. Compiles clean. **Not yet tested in-game.**
-- [ ] **Cooking** — *(designed, one open question — priority skill)*.
-      Level effect = reduced burn/fail chance, not speed or access; no
-      recipe-level-gating (biome progression already paces ingredients).
-      Base single-ingredient recipes always available. **Open:** the
-      special/multi-ingredient recipe tier (buffs stacked together) is
-      still unfleshed — the main remaining design space for this skill.
-      Also: [valheim-food-reference.md](valheim-food-reference.md) was
-      compiled pre-1.0 and is flagged as needing a refresh now that 1.0
-      has actually landed.
+- [x] **Cooking** ([SkillSystem/CookingSkill.cs](../src/Core/SkillSystem/CookingSkill.cs), [Patches/CookingPatches.cs](../src/Core/Patches/CookingPatches.cs)) —
+      *(implemented, not yet runtime-tested — burn-chance half done,
+      special-recipe tier still blocked on design)*. Seventh skill, and
+      unlike Skinning/Smithing, vanilla's own Cooking skill IS already
+      actively used — confirmed `CookingStation.OnInteract` already
+      raises `Skills.SkillType.Cooking` (both on adding an ingredient and
+      collecting a finished dish, with an existing `GetSkillFactor`-scaled
+      bonus-extra-food roll on collection). Redirected the same way as
+      Woodcutting/Pickaxes/Fishing for consistency with vision.md's
+      "every skill the player sees is ours" architecture, not because
+      anything was broken — the bonus-food roll now tracks our skill
+      automatically via the existing generic `GetSkillFactor` redirect,
+      no extra code needed. **Locked-in "reduced burn/fail chance"
+      implemented:** confirmed `CookingStation.UpdateCooking` marks food
+      Burnt on a purely fixed time threshold
+      (`cookedTime > itemConversion.m_cookTime * 2f`) with no skill
+      factor anywhere in the decision. Rather than replicate that
+      private per-slot iteration to intercept the decision at its
+      source, a Prefix on `SetSlot` catches the moment a slot is about
+      to be written as Burnt and rolls a Cooking-level-scaled chance
+      (config, closest player's skill — same approximation Fishing uses,
+      since `UpdateCooking` runs on the station's own timer with no
+      player context) to redirect it to Done instead, using
+      `GetSlot`/`GetItemConversion` (the same lookup vanilla itself uses)
+      to figure out the correct "saved" result item. Known minor cosmetic
+      gap: the burnt particle/sound effect still plays even on a saved
+      cook, since it fires unconditionally before `SetSlot` — fixing that
+      would need the fragile full-replication approach this was
+      deliberately avoiding, not worth it for a visual-only quirk. No
+      recipe-level-gating was needed (vision.md's own design — biome
+      progression already paces ingredients, nothing to build). **Still
+      blocked:** the special/multi-ingredient recipe tier — vision.md
+      itself flags this as unfleshed design space, nothing invented here.
+      Also unaddressed: [valheim-food-reference.md](valheim-food-reference.md)
+      still needs its pre-1.0-to-1.0 data refresh. Compiles clean. **Not
+      yet tested in-game.**
 - [ ] **Building** — *(designed, trivial)*. Not gated behind a
       level at all, stays open like vanilla. May exist as a nominal skill
       with no functional effect.

@@ -41,6 +41,9 @@ namespace VikingAdventure.Core
         public static ConfigEntry<float> SkinningCarcassVisualRotationX;
         public static ConfigEntry<float> SkinningCarcassVisualScale;
 
+        public static ConfigEntry<float> CookingBurnPreventionChanceAtMaxLevel;
+        public static ConfigEntry<float> CookingBurnPreventionRadius;
+
         private void Awake()
         {
             BindConfig();
@@ -53,6 +56,7 @@ namespace VikingAdventure.Core
             PrefabManager.OnVanillaPrefabsAvailable += SkinningSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += SkinningSystem.RegisterDefaults;
             PrefabManager.OnVanillaPrefabsAvailable += SmithingSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += CookingSkill.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
@@ -102,6 +106,14 @@ namespace VikingAdventure.Core
             SkinningCarcassVisualScale = Config.Bind(
                 "Skinning", "CarcassVisualScale", 1f,
                 "Uniform scale applied to a carcass piece's reused creature mesh. Needs live tuning once actually seen in-game.");
+
+            CookingBurnPreventionChanceAtMaxLevel = Config.Bind(
+                "Cooking", "BurnPreventionChanceAtMaxLevel", 0.75f,
+                "Chance to save food that would otherwise burn, at level 100 (max skill). 0.75 = 75% chance at level 100, scaling smoothly from 0 at level 0.");
+
+            CookingBurnPreventionRadius = Config.Bind(
+                "Cooking", "BurnPreventionRadius", 10f,
+                "Radius (meters) around a cooking station to find the player whose Cooking level applies -- there's no per-slot ownership tracked by vanilla, so this uses the closest player, same approximation Fishing uses for bite chance.");
         }
 
         private void OnDestroy()
