@@ -21,33 +21,16 @@ namespace VikingAdventure.Core.Patches
     // clip, not a scriptable number, and hacking Animator.speed directly
     // would risk desyncing the networked hit-trigger timing. Instead,
     // vanilla represents weapon "efficiency" the same way ValheimQoL's
-    // StaminaCombatPacing does: stamina cost per swing. Confirmed
-    // Attack.GetAttackStamina() already reduces cost by
-    // `0.33 * GetSkillFactor(m_weapon.m_shared.m_skillType)` -- vanilla's
-    // own mechanic for exactly this, keyed off whichever vanilla skill
-    // the weapon claims. Since our redirect freezes vanilla WoodCutting
-    // at whatever level it had when this mod first loaded, that
-    // reduction is effectively dead for chop tools now -- so a Postfix
-    // adds the same style of reduction back, sourced from OUR skill
-    // instead. Net effect: higher Woodcutting level = more chops per
-    // stamina bar = faster sustained gathering, without touching
-    // animation timing at all. This also happens to be the same
-    // "efficiency" framing vision.md itself uses for the future Attack
-    // skill, so it's consistent with where this project is already
-    // headed, not a one-off reinterpretation.
-    [HarmonyPatch(typeof(Attack), nameof(Attack.GetAttackStamina))]
-    public static class WoodcuttingStaminaEfficiencyPatch
-    {
-        static void Postfix(Attack __instance, ref float __result)
-        {
-            if (__instance.m_weapon == null) return;
-            if (__instance.m_weapon.m_shared.m_skillType != global::Skills.SkillType.WoodCutting) return;
-            if (!(__instance.m_character is Player player)) return;
-
-            float skillFactor = player.GetSkillFactor(WoodcuttingSkill.Type);
-            __result -= __result * CorePlugin.WoodcuttingStaminaEfficiencyWeight.Value * skillFactor;
-        }
-    }
+    // StaminaCombatPacing does: stamina cost per swing, via
+    // Attack.GetAttackStamina() reducing cost by
+    // `0.33 * GetSkillFactor(m_weapon.m_shared.m_skillType)`. No patch
+    // needed here anymore -- SkillXpRedirect.GetSkillFactorRedirectPatch
+    // (added while wiring up Fishing) fixes Player.GetSkillFactor itself
+    // for every redirected skill, so this formula now reads Woodcutting's
+    // real level generically, the same way every other vanilla formula
+    // that calls GetSkillFactor does. Net effect unchanged: higher
+    // Woodcutting level = more chops per stamina bar = faster sustained
+    // gathering, without touching animation timing at all.
     public static class TreeDamageBoost
     {
         public static void Apply(HitData hit)

@@ -80,4 +80,32 @@ namespace VikingAdventure.Core.SkillSystem
             __result.RemoveAll(skill => SkillXpRedirect.IsRedirected(skill.m_info.m_skill));
         }
     }
+
+    // Discovered while wiring up Fishing: XP isn't the only thing vanilla
+    // formulas read from a skill. Attack.GetAttackStamina, FishingFloat's
+    // reel-in stamina/pull-speed scaling, and Player's own build-durability
+    // skill check all call Player.GetSkillFactor(SkillType) -- confirmed
+    // this is the one real entry point gameplay code goes through for
+    // "how strong is this skill's effect right now" (Run/Swim/Dodge/Sneak
+    // bypass it and call Skills.GetSkillFactor directly, but none of
+    // those are on our skill list, so that's fine). Once a vanilla skill
+    // is redirected, its own factor stays frozen forever, so every one of
+    // those formulas would silently stop scaling with level unless this
+    // is fixed at the same single choke point RaiseSkill was. This
+    // replaces the per-skill stamina-efficiency patches Woodcutting and
+    // Mining each had (WoodcuttingStaminaEfficiencyPatch,
+    // MiningStaminaEfficiencyPatch) -- those were manually
+    // reimplementing exactly what this one Postfix now does for every
+    // redirected skill and every vanilla formula that reads it, not just
+    // attack stamina.
+    [HarmonyPatch(typeof(Player), nameof(Player.GetSkillFactor))]
+    public static class GetSkillFactorRedirectPatch
+    {
+        static void Postfix(Player __instance, global::Skills.SkillType skill, ref float __result)
+        {
+            if (!SkillXpRedirect.TryGet(skill, out SkillXpRedirect.Entry entry)) return;
+
+            __result = __instance.GetSkills().GetSkillFactor(entry.CustomType);
+        }
+    }
 }

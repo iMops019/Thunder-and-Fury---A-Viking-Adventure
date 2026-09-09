@@ -42,7 +42,18 @@ and levels is ours, with our own XP curves and level-gated effects.
       storage every call — a Postfix there filters out anything
       registered as redirected, so registering a skill's XP redirect
       hides it too, one call does both halves of "neutralized and
-      hidden."
+      hidden." **Generalized further while wiring up Fishing:** XP isn't
+      the only thing vanilla formulas read from a skill —
+      `Attack.GetAttackStamina`, `FishingFloat`'s reel-in stamina/pull
+      speed, and Player's own build-durability check all call
+      `Player.GetSkillFactor(SkillType)`, confirmed as the one real entry
+      point gameplay code goes through for "how strong is this skill's
+      effect right now." A generic Postfix there now redirects that too
+      for any registered skill — this replaced Woodcutting's and Mining's
+      one-off `*StaminaEfficiencyPatch` classes, which were manually
+      reimplementing exactly what this single choke point now does for
+      every redirected skill and every vanilla formula that reads it, not
+      just attack stamina.
 - [x] **Woodcutting** ([SkillSystem/WoodcuttingSkill.cs](../src/Core/SkillSystem/WoodcuttingSkill.cs), [Patches/WoodcuttingPatches.cs](../src/Core/Patches/WoodcuttingPatches.cs)) —
       *(implemented end-to-end, not yet runtime-tested)*. First skill,
       proving the whole loop: registration, XP redirect (vanilla
@@ -57,12 +68,12 @@ and levels is ours, with our own XP curves and level-gated effects.
       timing) — instead, confirmed `Attack.GetAttackStamina()` already
       reduces stamina cost per swing by
       `0.33 * GetSkillFactor(weapon's skill type)`, vanilla's own
-      "skill = efficiency" mechanic, just dead now since our redirect
-      freezes vanilla WoodCutting. A Postfix adds the same style of
-      reduction back sourced from our skill instead (config weight,
-      default 0.33 matching vanilla) — more chops per stamina bar, and
-      the same "efficiency" framing vision.md itself already uses for the
-      future Attack skill, so not a one-off reinterpretation. Level-15
+      "skill = efficiency" mechanic — now fixed generically by
+      `SkillXpRedirect`'s `GetSkillFactorRedirectPatch` (see the
+      architecture entry above) rather than a Woodcutting-specific patch.
+      More chops per stamina bar, and the same "efficiency" framing
+      vision.md itself already uses for the future Attack skill, so not a
+      one-off reinterpretation. Level-15
       milestone (2x XP + 25% bonus log yield, config levels/amounts) —
       the yield half reuses the log-drop-table research from RarityLoot's
       LogYieldPatch, reimplemented here rather than shared since Core
@@ -72,8 +83,9 @@ and levels is ours, with our own XP curves and level-gated effects.
       *(implemented, not yet runtime-tested)*. Second skill, same proven
       pattern as Woodcutting — registration, XP redirect (vanilla
       `Pickaxes` → ours, hidden from the skill list), per-level ore
-      damage scaling, and the same stamina-efficiency "speed" stand-in.
-      One wrinkle Woodcutting didn't have: ore/rock damage flows through
+      damage scaling, and the same stamina-efficiency "speed" stand-in
+      (also now generic — see the architecture entry above). One wrinkle
+      Woodcutting didn't have: ore/rock damage flows through
       two different vanilla components depending on rock type —
       `MineRock5.RPC_Damage` (newer, multi-hit-area rocks) and
       `MineRock.RPC_Hit` (older, single-area) — both patched to cover
@@ -86,8 +98,33 @@ and levels is ours, with our own XP curves and level-gated effects.
       Postfix on `DamageArea`; `MineRock` (the older single-area variant)
       tracks health in the ZDO instead, re-read the same way after
       `RPC_Hit`. Compiles clean. **Not yet tested in-game.**
-- [ ] **Skill list** — *(designed, first pass; Woodcutting + Mining now
-      built)*. Gathering: Mining (built), Woodcutting (built), Fishing,
+- [x] **Fishing** ([SkillSystem/FishingSkill.cs](../src/Core/SkillSystem/FishingSkill.cs), [Patches/FishingPatches.cs](../src/Core/Patches/FishingPatches.cs)) —
+      *(implemented, not yet runtime-tested)*. Third skill, deliberately
+      shaped differently — vision.md: "keeps vanilla's cast/bait/reel
+      mechanic largely as-is ... level primarily scaling catch chance."
+      No damage concept here. Registration + XP redirect is the standard
+      pattern; the reel-in minigame (stamina cost, pull speed) already
+      reads `Player.GetSkillFactor(Fishing)` in vanilla, so it now tracks
+      our skill for free via the generic redirect above — no
+      Fishing-specific patch needed for that half. What DID need research:
+      bite chance. Confirmed `Fish.FindFloat()` currently rolls
+      `Random.value < m_baseHookChance` with **no skill factor at all** —
+      vanilla Fishing skill has zero effect on how often you get bites,
+      only on reeling once hooked. A Prefix/Postfix pair (using Harmony's
+      `__state` to pass data between them, not a static field, so it's
+      safe across back-to-back calls for different fish in the same
+      frame) temporarily boosts the biting fish's own
+      `m_baseHookChance` for the duration of one `FindFloat()` call, based
+      on the best Fishing level among any nearby angler, then restores it.
+      **Not done:** vision.md's Fishing Rod (craftable from level 1, no
+      Haldor) and Bait (from common drops, not gold-gated) — those are
+      recipe/item changes, not skill mechanics, deliberately left for a
+      separate pass the same way Woodcutting/Mining's itemization lives
+      in RarityLoot rather than here. Compiles clean. **Not yet tested
+      in-game.**
+- [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining, and
+      Fishing now built)*. Gathering: Mining (built), Woodcutting (built),
+      Fishing (built),
       Skinning. Production: Smithing, Cooking, Fletching, Building,
       Crafting. Combat: Attack, Strength, Defense (broad OSRS-style stats, not
       per-weapon-type like vanilla).

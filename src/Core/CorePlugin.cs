@@ -26,16 +26,16 @@ namespace VikingAdventure.Core
         private readonly Harmony _harmony = new Harmony(PluginGUID);
 
         public static ConfigEntry<float> WoodcuttingDamagePerLevel;
-        public static ConfigEntry<float> WoodcuttingStaminaEfficiencyWeight;
         public static ConfigEntry<int> WoodcuttingMilestoneLevel;
         public static ConfigEntry<float> WoodcuttingMilestoneXpMultiplier;
         public static ConfigEntry<float> WoodcuttingMilestoneLogYieldBonusPercent;
 
         public static ConfigEntry<float> MiningDamagePerLevel;
-        public static ConfigEntry<float> MiningStaminaEfficiencyWeight;
         public static ConfigEntry<int> MiningMilestoneLevel;
         public static ConfigEntry<float> MiningMilestoneXpMultiplier;
         public static ConfigEntry<float> MiningMilestoneOreYieldBonusPercent;
+
+        public static ConfigEntry<float> FishingBiteChanceBonusAtMaxLevel;
 
         private void Awake()
         {
@@ -45,6 +45,7 @@ namespace VikingAdventure.Core
 
             PrefabManager.OnVanillaPrefabsAvailable += WoodcuttingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += MiningSkill.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += FishingSkill.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
@@ -54,10 +55,6 @@ namespace VikingAdventure.Core
             WoodcuttingDamagePerLevel = Config.Bind(
                 "Woodcutting", "DamagePerLevel", 0.01f,
                 "Extra chop damage per Woodcutting level, as a fraction. 0.01 = +1% per level, so level 50 = +50%.");
-
-            WoodcuttingStaminaEfficiencyWeight = Config.Bind(
-                "Woodcutting", "StaminaEfficiencyWeight", 0.33f,
-                "How much Woodcutting level reduces chop stamina cost, at level 100 (max skill). 0.33 = -33% at level 100, matching vanilla's own equivalent formula for other skills. This is Woodcutting's stand-in for \"speed\": more chops per stamina bar rather than a faster swing animation -- see WoodcuttingPatches.cs for why.");
 
             WoodcuttingMilestoneLevel = Config.Bind(
                 "Woodcutting", "MilestoneLevel", 15,
@@ -75,10 +72,6 @@ namespace VikingAdventure.Core
                 "Mining", "DamagePerLevel", 0.01f,
                 "Extra mining damage per Mining level, as a fraction. 0.01 = +1% per level, so level 50 = +50%.");
 
-            MiningStaminaEfficiencyWeight = Config.Bind(
-                "Mining", "StaminaEfficiencyWeight", 0.33f,
-                "How much Mining level reduces pickaxe stamina cost, at level 100 (max skill). Same mechanic and reasoning as Woodcutting's stand-in for \"speed\" -- see WoodcuttingPatches.cs.");
-
             MiningMilestoneLevel = Config.Bind(
                 "Mining", "MilestoneLevel", 15,
                 "Mining level that unlocks the milestone bonus -- shares Woodcutting's milestone level and shape (double XP + bonus yield), applied to ore instead of logs.");
@@ -90,6 +83,10 @@ namespace VikingAdventure.Core
             MiningMilestoneOreYieldBonusPercent = Config.Bind(
                 "Mining", "MilestoneOreYieldBonusPercent", 25f,
                 "Extra ore/stone dropped per destroyed rock node once the milestone level is reached, as a percentage. 25 = +25% more.");
+
+            FishingBiteChanceBonusAtMaxLevel = Config.Bind(
+                "Fishing", "BiteChanceBonusAtMaxLevel", 0.5f,
+                "Relative increase to a fish's chance to bite your line, at level 100 (max skill). 0.5 = +50% relative bite chance at level 100, scaling smoothly from 0 at level 0.");
         }
 
         private void OnDestroy()

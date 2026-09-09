@@ -51,19 +51,11 @@ namespace VikingAdventure.Core.Patches
         static void Prefix(HitData hit) => OreDamageBoost.Apply(hit);
     }
 
-    [HarmonyPatch(typeof(Attack), nameof(Attack.GetAttackStamina))]
-    public static class MiningStaminaEfficiencyPatch
-    {
-        static void Postfix(Attack __instance, ref float __result)
-        {
-            if (__instance.m_weapon == null) return;
-            if (__instance.m_weapon.m_shared.m_skillType != global::Skills.SkillType.Pickaxes) return;
-            if (!(__instance.m_character is Player player)) return;
-
-            float skillFactor = player.GetSkillFactor(MiningSkill.Type);
-            __result -= __result * CorePlugin.MiningStaminaEfficiencyWeight.Value * skillFactor;
-        }
-    }
+    // Speed (attack-stamina efficiency): no patch needed here, same as
+    // Woodcutting -- SkillXpRedirect.GetSkillFactorRedirectPatch fixes
+    // Player.GetSkillFactor generically for every redirected skill, so
+    // Attack.GetAttackStamina's own vanilla formula now reads Mining's
+    // real level without a per-skill patch.
 
     // Mining shares Woodcutting's level-15 milestone (2x XP lives in
     // MiningSkill.AdjustXp; this is the ore-yield half). Same
