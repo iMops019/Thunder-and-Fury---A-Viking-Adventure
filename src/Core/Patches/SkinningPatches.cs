@@ -13,12 +13,13 @@ namespace VikingAdventure.Core.Patches
     // clarification: skinning (hide) and butchering (meat) are two
     // separate harvests, not one "harvest everything" action, and the
     // tool requirement is any basic knife/dagger a player can craft --
-    // not one specific named item. A dead registered animal leaves TWO
-    // carcass pieces at the kill site, spawned together: one yields hide
-    // when interacted with, the other yields meat. Either can be
-    // harvested independently, in any order. Anything else that
-    // wasn't a Skinning/Butchering item to begin with (trophies, etc.)
-    // is untouched and still drops normally.
+    // not one specific named item. A dead registered animal leaves up to
+    // TWO carcass pieces at the kill site, spawned together: one yields
+    // hide when interacted with, the other yields meat (an animal with
+    // only one of the two, e.g. Boar with no hide item, just gets one
+    // piece). Either can be harvested independently, in any order.
+    // Anything else that wasn't a Skinning/Butchering item to begin with
+    // (trophies, etc.) is untouched and still drops normally.
     //
     // Confirmed against the real 1.0 decompile: Pickable already has
     // everything needed to make a harvestable resource node --
@@ -29,23 +30,46 @@ namespace VikingAdventure.Core.Patches
     // scaled by that skill's level). Since Pickable only ever grants ONE
     // item type, two carcass pieces (cloned from the same base resource
     // prefab, each configured with a different item) is what "skin OR
-    // butcher independently" actually requires -- cleaner than one
-    // Pickable trying to hold two different loot outcomes.
+    // butcher independently" actually requires -- no container-based
+    // redesign needed, contrary to this system's own first-cut notes.
     //
     // Tool-gating: any equipped item whose weapon-skill type is
     // Skills.SkillType.Knives qualifies -- vanilla's starting Knife
     // included, so a player may already own a valid tool without
     // crafting anything new. RarityLoot's Skinning Knife
     // (Items/SkinningKnife.cs) is one example that satisfies this, not
-    // the only one; it isn't checked by exact identity anymore.
+    // the only one; it isn't checked by exact identity.
+    //
+    // IMPORTANT hook-point correction (found while researching this
+    // session's carcass-visual question, by reading Character.OnDeath in
+    // full for the first time): the original version of this patch
+    // targeted CharacterDrop.OnDeath, but that's frequently too late to
+    // matter. Character.OnDeath creates the death Ragdoll BEFORE calling
+    // CharacterDrop.OnDeath, and Ragdoll.Setup immediately calls
+    // characterDrop.GenerateDropList() to save a snapshot of the loot for
+    // its own delayed drop-on-dissolve -- then, since Ragdoll.m_dropItems
+    // defaults to true, Character.OnDeath disables CharacterDrop's drops
+    // outright (CharacterDrop.SetDropsEnabled(false)) so it never fires
+    // at all. Net effect: for any creature with a normal death ragdoll
+    // (which is all of them), CharacterDrop.OnDeath either never runs or
+    // runs against a drops-disabled component, so a Prefix there never
+    // actually intercepts anything -- the ragdoll's own saved snapshot,
+    // taken before the Prefix could run, still contains hide+meat and
+    // still drops them later via Ragdoll.SpawnLoot. Patching
+    // Character.OnDeath instead -- before the ragdoll is created at
+    // all -- means the ragdoll's own snapshot is taken from the
+    // already-filtered drop list, so this works whether or not the
+    // ragdoll ends up disabling CharacterDrop.
     //
     // Verification caveat, same shape as StonePickaxe's: "MushroomYellow"
-    // as the cloned base prefab and "RawMeat"/"DeerHide" as Deer's drops
-    // are standard, well-established Jotunn/Valheim names, not
-    // independently confirmed against this install's binary asset data
-    // (which lives in Unity asset bundles, not the decompiled C#
-    // assembly). Safe failure mode if wrong: Jotunn logs a clear error
-    // on load.
+    // as the cloned base prefab and the animal drop-item ids below are
+    // standard, well-established Jotunn/Valheim names, not independently
+    // confirmed against this install's binary asset data (which lives in
+    // Unity asset bundles, not the decompiled C# assembly). Confidence is
+    // lower for Wolf's meat drop and treating Neck's signature item
+    // (NeckTail) as its "hide" slot -- flagged explicitly on those calls
+    // below. Safe failure mode if any name is wrong: Jotunn logs a clear
+    // error on load for that one animal, nothing else is affected.
     public static class SkinningSystem
     {
         public class AnimalEntry
@@ -66,15 +90,32 @@ namespace VikingAdventure.Core.Patches
         // resource to clone structurally (collider, ZNetView, Pickable
         // component) -- its own visual is a placeholder until this gets
         // real art, flagged rather than pretending it's finished.
+        //
+        // hideItemName/meatItemName may each be null (but not both) for
+        // an animal that only yields one of the two -- Boar has no hide
+        // item, for example.
         public static void RegisterAnimal(string creaturePrefabName, string basePickablePrefabName,
             string hideItemName, int hideAmount, string meatItemName, int meatAmount)
         {
-            string hideCarcassName = "Carcass_" + creaturePrefabName + "_Hide";
-            string meatCarcassName = "Carcass_" + creaturePrefabName + "_Meat";
+            if (hideItemName == null && meatItemName == null)
+            {
+                Jotunn.Logger.LogError($"Skinning: {creaturePrefabName} registered with neither a hide nor a meat item, skipping");
+                return;
+            }
 
-            GameObject hideCarcass = CreateCarcassPiece(hideCarcassName, basePickablePrefabName, hideItemName, hideAmount, creaturePrefabName);
-            GameObject meatCarcass = CreateCarcassPiece(meatCarcassName, basePickablePrefabName, meatItemName, meatAmount, creaturePrefabName);
-            if (hideCarcass == null || meatCarcass == null) return;
+            string hideCarcassName = null;
+            if (hideItemName != null)
+            {
+                hideCarcassName = "Carcass_" + creaturePrefabName + "_Hide";
+                if (CreateCarcassPiece(hideCarcassName, basePickablePrefabName, hideItemName, hideAmount, creaturePrefabName) == null) return;
+            }
+
+            string meatCarcassName = null;
+            if (meatItemName != null)
+            {
+                meatCarcassName = "Carcass_" + creaturePrefabName + "_Meat";
+                if (CreateCarcassPiece(meatCarcassName, basePickablePrefabName, meatItemName, meatAmount, creaturePrefabName) == null) return;
+            }
 
             ByCreatureName[creaturePrefabName] = new AnimalEntry
             {
@@ -125,8 +166,8 @@ namespace VikingAdventure.Core.Patches
 
         public static void SpawnCarcass(AnimalEntry entry, Vector3 position)
         {
-            SpawnPiece(entry.HideCarcassPrefabName, position + HidePieceOffset);
-            SpawnPiece(entry.MeatCarcassPrefabName, position + MeatPieceOffset);
+            if (entry.HideCarcassPrefabName != null) SpawnPiece(entry.HideCarcassPrefabName, position + HidePieceOffset);
+            if (entry.MeatCarcassPrefabName != null) SpawnPiece(entry.MeatCarcassPrefabName, position + MeatPieceOffset);
         }
 
         static void SpawnPiece(string carcassPrefabName, Vector3 position)
@@ -144,47 +185,79 @@ namespace VikingAdventure.Core.Patches
             return pickable != null && CarcassInstances.Contains(pickable);
         }
 
-        // First-cut content: Deer only, proving the mechanic before
-        // spending time on every other animal. Adding Boar/Wolf/Neck
-        // later is one RegisterAnimal call each, no new plumbing.
+        // Four animals now instead of just Deer -- the registry made
+        // this a one-line call each, as promised. Confidence varies:
+        // Deer and Boar are high-confidence, well-established names.
+        // Wolf's meat drop and Neck's "hide" slot are lower-confidence
+        // guesses, called out individually below rather than presented
+        // with the same certainty as the other two.
         public static void RegisterDefaults()
         {
             RegisterAnimal("Deer", "MushroomYellow", "DeerHide", 1, "RawMeat", 2);
+
+            // Boar has no distinct hide/pelt item in vanilla as far as
+            // this could confirm -- meat only.
+            RegisterAnimal("Boar", "MushroomYellow", null, 0, "RawMeat", 2);
+
+            // WolfPelt is a well-known crafting material (wolf armor
+            // recipes). Wolf also dropping generic RawMeat is a lower-
+            // confidence assumption (most early creatures share that one
+            // item, but this wasn't independently confirmed for Wolf
+            // specifically) -- if wrong, only Wolf's meat carcass piece
+            // fails to register (logged), the hide piece is unaffected.
+            RegisterAnimal("Wolf", "MushroomYellow", "WolfPelt", 1, "RawMeat", 2);
+
+            // Neck has no separate meat item as far as this could
+            // confirm -- its signature drop, NeckTail, is used here as
+            // the "hide" slot even though it isn't literally hide, since
+            // it's the creature's one distinctive harvestable material
+            // and the skinning/butchering split is really "which of the
+            // two slots does this go in" rather than a strict hide-vs-
+            // meat rule.
+            RegisterAnimal("Neck", "MushroomYellow", "NeckTail", 1, null, 0);
         }
     }
 
     // Pulls the hide and meat entries out of a registered animal's drop
-    // list before vanilla's own CharacterDrop.OnDeath spawns them, then
-    // spawns the two carcass pieces instead. Anything else in m_drops
-    // (trophies, etc.) is left untouched and still drops normally.
-    [HarmonyPatch(typeof(CharacterDrop), nameof(CharacterDrop.OnDeath))]
+    // list BEFORE Character.OnDeath creates its death ragdoll (see this
+    // file's header comment for why that timing matters -- the ragdoll
+    // snapshots the drop list for its own delayed drop immediately, so
+    // waiting until CharacterDrop.OnDeath is too late), then spawns the
+    // carcass piece(s) instead. Anything else in m_drops (trophies, etc.)
+    // is left untouched and still drops normally, whether via
+    // CharacterDrop.OnDeath directly or via the ragdoll's delayed drop.
+    [HarmonyPatch(typeof(Character), nameof(Character.OnDeath))]
     public static class SkinningCarcassSpawnPatch
     {
-        static void Prefix(CharacterDrop __instance, out List<CharacterDrop.Drop> __state)
+        static void Prefix(Character __instance, out List<CharacterDrop.Drop> __state)
         {
             __state = null;
-            if (!__instance.m_dropsEnabled || __instance.m_character == null) return;
 
-            string creatureName = __instance.m_character.m_nview != null
-                ? __instance.m_character.m_nview.GetPrefabName()
-                : null;
+            CharacterDrop drop = __instance.GetComponent<CharacterDrop>();
+            if (drop == null || !drop.m_dropsEnabled) return;
+
+            string creatureName = __instance.m_nview != null ? __instance.m_nview.GetPrefabName() : null;
             if (creatureName == null || !SkinningSystem.TryGetAnimal(creatureName, out SkinningSystem.AnimalEntry entry)) return;
 
-            List<CharacterDrop.Drop> removed = __instance.m_drops
-                .Where(d => d.m_prefab != null && (d.m_prefab.name == entry.HideItemName || d.m_prefab.name == entry.MeatItemName))
+            List<CharacterDrop.Drop> removed = drop.m_drops
+                .Where(d => d.m_prefab != null
+                    && ((entry.HideItemName != null && d.m_prefab.name == entry.HideItemName)
+                        || (entry.MeatItemName != null && d.m_prefab.name == entry.MeatItemName)))
                 .ToList();
             if (removed.Count == 0) return;
 
-            foreach (CharacterDrop.Drop drop in removed) __instance.m_drops.Remove(drop);
+            foreach (CharacterDrop.Drop d in removed) drop.m_drops.Remove(d);
             __state = removed;
 
-            Vector3 pos = __instance.m_character.GetCenterPoint();
-            SkinningSystem.SpawnCarcass(entry, pos);
+            SkinningSystem.SpawnCarcass(entry, __instance.GetCenterPoint());
         }
 
-        static void Postfix(CharacterDrop __instance, List<CharacterDrop.Drop> __state)
+        static void Postfix(Character __instance, List<CharacterDrop.Drop> __state)
         {
-            if (__state != null) __instance.m_drops.AddRange(__state);
+            if (__state == null) return;
+
+            CharacterDrop drop = __instance.GetComponent<CharacterDrop>();
+            if (drop != null) drop.m_drops.AddRange(__state);
         }
     }
 

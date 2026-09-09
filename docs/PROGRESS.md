@@ -123,38 +123,57 @@ and levels is ours, with our own XP curves and level-gated effects.
       in RarityLoot rather than here. Compiles clean. **Not yet tested
       in-game.**
 - [x] **Skinning and Butchering** ([SkillSystem/SkinningSkill.cs](../src/Core/SkillSystem/SkinningSkill.cs), [Patches/SkinningPatches.cs](../src/Core/Patches/SkinningPatches.cs), [Skinning Knife](../src/MiniMods/RarityLoot/Items/SkinningKnife.cs)) —
-      *(implemented, not yet runtime-tested — first-cut scope: Deer
-      only)*. Fourth skill, and the first with no vanilla equivalent at
-      all (confirmed against the full `Skills.SkillType` enum — no
-      "Skinning" entry), so no XP redirect is needed, just registration.
-      Matches vision.md's own framing directly: "action/flavor mechanic
-      first ... rather than designing deep level-gated bonuses right
-      away" — no per-level scaling code, all XP/bonus-yield comes free
-      from vanilla's own `Pickable` component
-      (`m_pickRaiseSkill`/`m_maxLevelBonusChance`, confirmed to accept a
-      Jotunn custom `SkillType` exactly like a vanilla one). **Reworked
-      this session:** skinning (hide) and butchering (meat) are two
-      independent harvests, not one — a dead registered animal leaves
-      TWO carcass pieces at the kill site (each a separately cloned
-      Pickable-based resource, one configured for hide, one for meat),
-      harvestable in either order. A Prefix on `CharacterDrop.OnDeath`
-      pulls just the hide and meat entries out of the drop list before it
-      spawns; anything else (trophies, etc.) is untouched and still drops
-      normally. Tool requirement is also now generic — a Prefix on
+      *(implemented, not yet runtime-tested — 4 animals)*. Fourth skill,
+      and the first with no vanilla equivalent at all (confirmed against
+      the full `Skills.SkillType` enum — no "Skinning" entry), so no XP
+      redirect is needed, just registration. Matches vision.md's own
+      framing directly: "action/flavor mechanic first ... rather than
+      designing deep level-gated bonuses right away" — no per-level
+      scaling code, all XP/bonus-yield comes free from vanilla's own
+      `Pickable` component (`m_pickRaiseSkill`/`m_maxLevelBonusChance`,
+      confirmed to accept a Jotunn custom `SkillType` exactly like a
+      vanilla one). Skinning (hide) and butchering (meat) are two
+      independent harvests — a dead registered animal leaves up to TWO
+      carcass pieces at the kill site (each a separately cloned
+      Pickable-based resource; an animal with only one of the two, e.g.
+      Boar with no hide item, gets one piece), harvestable in either
+      order. Anything else (trophies, etc.) is untouched and still drops
+      normally. Tool requirement is generic — a Prefix on
       `Pickable.Interact`, scoped only to Pickable instances this system
-      itself spawned (tracked by reference, so it can't affect unrelated
-      mushrooms/berries), requires any equipped item in the vanilla
-      Knives weapon-skill category, not one specific named item —
-      matches "just need a basic flint/stone knife or dagger," and means
-      a player may already own a valid tool without crafting anything
-      new. The Skinning Knife (RarityLoot) still exists as a cheap,
-      purpose-named early option, just isn't the exclusive gate anymore.
-      **Known first-cut limits:** only Deer is registered (the registry
-      makes adding Boar/Wolf/Neck later a one-line call each, no new
-      plumbing); the two carcass pieces' visuals are whatever the cloned
-      base prefab looks like (a placeholder, not real art). Same
-      base-prefab-name verification caveat as Stone Pickaxe/Voltun's Set.
-      Compiles clean. **Not yet tested in-game.**
+      itself spawned, requires any equipped item in the vanilla Knives
+      weapon-skill category, not one specific named item — matches "just
+      need a basic flint/stone knife or dagger." The Skinning Knife
+      (RarityLoot) still exists as a cheap, purpose-named early option,
+      just isn't the exclusive gate. **Bug found and fixed this session,
+      while researching the carcass visual:** the original patch targeted
+      `CharacterDrop.OnDeath`, which turns out to be too late to matter
+      for any creature with a normal death ragdoll (i.e. all of them) —
+      `Character.OnDeath` creates the ragdoll *first*, and
+      `Ragdoll.Setup` immediately snapshots the full unfiltered drop list
+      for its own delayed drop-on-dissolve, then disables
+      `CharacterDrop`'s drops outright since the ragdoll is now handling
+      it. The old Prefix never actually got a chance to intercept
+      anything — moved the patch to `Character.OnDeath` itself, before
+      the ragdoll exists, so its snapshot is taken from the
+      already-filtered list either way. **All 3 previously-flagged
+      first-cut limits addressed:** (1) now 4 animals — Deer, Boar
+      (meat only), Wolf, Neck (its signature `NeckTail` used as the
+      "hide" slot) — the registry made this genuinely a one-line call
+      each; Wolf's meat drop and Neck's hide-slot mapping are
+      lower-confidence guesses, flagged individually in code, safe
+      failure mode (Jotunn logs an error for just that animal) if wrong.
+      (2) "Multi-item carcasses would need a container redesign" turned
+      out to already be solved by the two-piece design — no redesign
+      needed. (3) Carcass visuals remain a real, *not* resolved
+      limitation: investigated reusing the death Ragdoll's own mesh (it
+      doesn't offer an interactable pattern, just a delayed auto-drop
+      timer) and reusing the granted item's own world-drop visual (a
+      different interaction path — `ItemDrop` pickup, not `Pickable` —
+      that would need its own tool-gating research). Neither was a safe
+      fit for this pass; still cloning `MushroomYellow` as a placeholder.
+      Real fix needs either a 3D art pipeline (explicitly out of scope
+      for this project) or a separate research pass on one of those two
+      paths. Compiles clean. **Not yet tested in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
       Fishing, and Skinning now built)*. Gathering: Mining (built),
       Woodcutting (built), Fishing (built), Skinning (built). Production:
@@ -177,7 +196,7 @@ and levels is ours, with our own XP curves and level-gated effects.
       recipe change not a mechanic). Skinning and Butchering: animal
       deaths leave two carcass pieces (hide + meat, harvested
       independently), any knife/dagger works (flavor/immersion first,
-      leveled bonuses later) — built for Deer only so
+      leveled bonuses later) — built for 4 animals so
       far, see the Pillar 1 entry above for scope.
 - [ ] **Smithing tier ladder** — *(designed, one open question)*. Normal
       gear stays as vanilla, no level gate. New Magic/Rare tiers sit
