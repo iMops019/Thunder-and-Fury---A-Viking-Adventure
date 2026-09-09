@@ -604,6 +604,154 @@ dependency, so it ships and updates independently of everything else.
       enough to accept for now. Compiles clean. **Not yet tested
       in-game.**
 
+## Classes & Passive Trees (new idea, 2026-09-09 — not yet in vision.md, deliberately left to stew)
+
+What I want: Last Epoch-inspired class system. Pick a class (Last Epoch:
+e.g. Sentinel); each class comes with its own passive tree, running
+*concurrently* with a generic tree everyone starts with (Last Epoch: the
+Base Class tree; here, a generic "Viking" tree, since there's no
+neutral/no-class state in a Viking setting the way Last Epoch has
+pre-mastery). Only one class tree active at a time, chosen once. Needs a
+brand-new **Player Level/XP** system as a prerequisite — vanilla Valheim
+has no player level at all, only skill levels (0-100 each, vision.md's
+OSRS-inspired system already covers those) — so this doesn't slot into
+an existing number, it invents one. Nothing designed yet beyond the pitch
+above. Explicitly not ready to lock any numbers: "testing is key, we have
+yet to test" (session's own words) — no in-game testing has happened for
+*anything* in this mod yet, so a level-20 class-gate guess would be
+several unvalidated layers deep. This entry exists to hold research and
+open questions until that testing starts.
+
+- [ ] **Player Level/XP system** — *(not designed)*. Needs its own XP
+      source and curve. Two architecturally different options, not yet
+      chosen between:
+      - **(A) Derived/aggregate** — Player Level computed FROM existing
+        skill levels (e.g. a formula over the sum/average of Attack,
+        Strength, Defense, Woodcutting, Mining, etc.), no new XP economy
+        needed. Direct precedent already inside our own design
+        inspiration: OSRS (vision.md's whole skill system is explicitly
+        OSRS-style) has exactly this split — individual skills 1-99, plus
+        a separate derived "Combat Level" computed from
+        Attack+Strength+Defence+HP, not separately farmed. This would
+        also directly answer the farming-speed worry below: if Level is
+        skill-derived, "grinding Woodcutting in Meadows raises your
+        Level" isn't a loophole, it's just how the number works, which
+        reframes the open question from "how do we prevent that" to "is
+        that pacing actually fine."
+      - **(B) Independent pool** — a new XP bar, fed by a fraction of all
+        XP gains (or specific actions/kills/discoveries), with its own
+        separate curve decoupled from the 0-100 skill curve. More design
+        control (can shape the curve/pacing exactly), but a second XP
+        economy to invent and balance from scratch, and vanilla gives us
+        nothing to reuse here the way skill XP reused vanilla's own
+        formula.
+- [ ] **Class-picking level threshold** — *(not decided — floated idea:
+      level 20)*. Confirmed against the real 1.0 decompile: vanilla
+      Valheim has **no relationship at all** between any player stat and
+      enemy difficulty to worry about breaking here (see the Monster
+      Scaling research below) — so whatever threshold we pick is a purely
+      new, self-contained design decision, not something that has to
+      thread through an existing system. Session's own concern, unresolved:
+      players who "farm like crazy" could hit a naive level 20 while still
+      in Meadows, which may or may not be a problem depending on which of
+      the two Player Level options above gets picked (see (A)'s reframing
+      above). Needs actual in-game testing before any number is locked.
+- [ ] **Passive tree content** (per class, plus the generic Viking tree)
+      — *(not designed at all)*. Zero nodes/effects decided yet. Blocked
+      on the class list existing first (which classes, how many, Viking
+      re-flavoring of something like Last Epoch's Sentinel/Mage/etc
+      archetypes).
+- [ ] **Class list** — *(not designed)*. Zero classes named/scoped yet
+      beyond "an array of classes, Viking-themed."
+
+**Research done this session (2026-09-09), to inform the above without
+locking anything yet:**
+
+- **Valheim's real monster-scaling system, confirmed against the local
+  1.0 decompile** — useful context for "how do enemies scale" since
+  that's the thing our new Player Level would sit alongside:
+  - `Character.m_level` is a per-spawn random **star tier** (1 = normal,
+    2 = one-star, 3 = two-star), not anything related to player level.
+    `SetupMaxHealth()` multiplies max HP by this level directly
+    (`GetMaxHealthBase() * level`), and `Attack.GetLevelDamageFactor()`
+    (`1 + max(0, level-1) * 0.5`) scales the creature's own damage —
+    level 2 = 2x HP / 1.5x damage, level 3 = 3x HP / 2x damage. Matches
+    the commonly-known "1-star doubles HP, 2-star hits much harder"
+    vanilla behavior.
+  - `Game.m_worldLevel` (0-10, global/server-wide, raised by defeating
+    bosses or set manually) is vanilla 1.0's actual difficulty dial —
+    scales enemy armor/damage/HP/move-speed AND the stats on gear found
+    in the world, all at once, via config-like fields
+    (`m_worldLevelEnemyHPMultiplier`, `m_worldLevelEnemyBaseDamage`,
+    etc.). This is Valheim's "New Game+ / hard mode" knob, unrelated to
+    any individual character's progress.
+  - `Game.GetPlayerDifficulty`/`GetDifficultyDamageScaleEnemy`/
+    `GetDifficultyDamageScalePlayer` scale damage dealt/taken purely by
+    **how many players are nearby** (co-op headcount balancing), again
+    nothing to do with level.
+  - **Conclusion:** there is no existing "creature level vs. player
+    level" coupling to preserve or worry about breaking — a new Player
+    Level system would be fully additive/orthogonal to vanilla's own
+    difficulty systems. Upside: low risk of fighting vanilla balance.
+    Downside: zero free guidance from vanilla on "what level should a
+    player be by biome X" — that pacing has to be invented (or borrowed
+    from precedent below), not extracted from game data the way skill
+    mechanics have been all session.
+- **Other games' class/mastery-unlock timing, for comparison:**
+  - **Last Epoch** — base class picked at character creation; the
+    Last-Epoch-specific "Mastery" (sub-class) unlocks at the end of
+    Chapter 2 (roughly a fifth to a third into the campaign) AND requires
+    20 passive points already spent in the base class tree first choice
+    is permanent, one Mastery per class.
+    ([TheGamer](https://www.thegamer.com/last-epoch-how-to-unlock-class-mastery/),
+    [GameRant](https://gamerant.com/last-epoch-how-unlock-mastery-classes/))
+  - **Path of Exile** — Ascendancy (sub-class) unlocks after completing
+    the Labyrinth, around character level 33 — roughly a third into a
+    full leveling run. ([PoE
+    Fandom](https://pathofexile.fandom.com/wiki/Ascendancy_class))
+  - **Simple MMO Classes** (existing Valheim mod) — class chosen
+    immediately at the very start, no level gate at all; explicitly
+    warns to start a *new* character since it doesn't retrofit onto
+    existing skill history.
+    ([Thunderstore](https://thunderstore.io/c/valheim/p/GGrNoobs_Hideout/Simple_MMO_Classes/))
+  - **AlmanacClasses** (existing Valheim mod) — the opposite extreme: no
+    exclusive choice ever, a free-form node system where a player can mix
+    talents from all 6 "classes" at once; XP comes from combat, chopping,
+    mining, taming, and picking up items.
+    ([GitHub](https://github.com/RustyMods/AlmanacClasses))
+  - **Valheim Level System by Lorska** (existing Valheim mod, no classes,
+    but the most directly relevant *pacing* precedent for inventing a
+    from-scratch Valheim player-level system) — level cap = 10 x number
+    of land biomes (80, at 8 biomes today), i.e. roughly a **10-level
+    budget per biome**, with a rubber-band catch-up mechanic if
+    under-leveled entering a new biome; grants 1 attribute point + 2
+    skill points per level.
+    ([Thunderstore](https://thunderstore.io/c/valheim/p/Lorska/Valheim_Level_System_by_Lorska/))
+    Notably, this lines up with the level-20 idea floated above almost
+    exactly: 20 ≈ "2 biomes' worth" ≈ done with Meadows, solidly into
+    Black Forest — a real, independent data point in the same
+    neighborhood as the session's own gut-guess, not a confirmation that
+    20 is correct, but a reason it isn't an unreasonable starting guess
+    either.
+  - **Real vanilla-Valheim biome pacing**, from community progression
+    guides (not a mod, just how the base game plays): a full playthrough
+    runs roughly 30-100 hours; experienced-player advice commonly
+    suggests having your main weapon's vanilla skill (0-100 scale — the
+    same curve our own Attack/Strength/etc. skills already reuse) at 10+
+    before entering Black Forest and 30+ before leaving it for Swamp.
+    Useful as a sanity check for how OUR OWN skills (not the new Player
+    Level) pace against biomes, since they share vanilla's curve.
+    ([PCGamer](https://www.pcgamer.com/games/survival-crafting/valheim-biome-order/),
+    [Sportskeeda](https://www.sportskeeda.com/esports/valheim-progression-guide-every-biome))
+- **Anti-farm design lever worth considering later** (not researched
+  in-depth this session, just flagged): several MMOs/CRPGs use
+  diminishing or first-kill/first-discovery-weighted XP (bonus XP the
+  first time you kill a creature type or find a new area, tapering on
+  repeat kills of the same thing) specifically to blunt "sit in one spot
+  and grind" farming without an outright cap. Relevant if Option (B)
+  above (independent XP pool) is chosen and the farming-speed concern
+  turns out to matter in actual testing.
+
 ## Quests (`src/MiniMods/Quests`)
 
 What I want: real objective-based quests with quest-giver NPC(s), not
