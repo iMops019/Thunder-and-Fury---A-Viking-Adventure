@@ -38,6 +38,9 @@ namespace VikingAdventure.Core
 
         public static ConfigEntry<float> FishingBiteChanceBonusAtMaxLevel;
 
+        public static ConfigEntry<float> SkinningCarcassVisualRotationX;
+        public static ConfigEntry<float> SkinningCarcassVisualScale;
+
         private void Awake()
         {
             BindConfig();
@@ -90,6 +93,14 @@ namespace VikingAdventure.Core
             FishingBiteChanceBonusAtMaxLevel = Config.Bind(
                 "Fishing", "BiteChanceBonusAtMaxLevel", 0.5f,
                 "Relative increase to a fish's chance to bite your line, at level 100 (max skill). 0.5 = +50% relative bite chance at level 100, scaling smoothly from 0 at level 0.");
+
+            SkinningCarcassVisualRotationX = Config.Bind(
+                "Skinning", "CarcassVisualRotationX", 90f,
+                "X-axis rotation (degrees) applied to a carcass piece's reused creature mesh. Needs live tuning once actually seen in-game -- the mesh renders in its rigged bind pose, not a real death pose, so this is a best-guess starting point for making it read as 'lying down' rather than 'standing.'");
+
+            SkinningCarcassVisualScale = Config.Bind(
+                "Skinning", "CarcassVisualScale", 1f,
+                "Uniform scale applied to a carcass piece's reused creature mesh. Needs live tuning once actually seen in-game.");
         }
 
         private void OnDestroy()

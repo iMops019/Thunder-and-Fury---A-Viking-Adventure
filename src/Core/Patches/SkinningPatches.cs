@@ -155,8 +155,63 @@ namespace VikingAdventure.Core.Patches
             pickable.m_respawnTimeMinutes = 0f;
             pickable.m_pickRaiseSkill = SkinningSkill.Type;
 
+            ApplyCreatureVisual(carcass, creaturePrefabName);
+
             PrefabManager.Instance.AddPrefab(carcass);
             return carcass;
+        }
+
+        // Reuses the actual animal's own mesh instead of the cloned base
+        // prefab's placeholder visual (a mushroom, structurally cloned
+        // for its Pickable/collider/ZNetView, nothing to do with what it
+        // looks like). Confirmed against the real 1.0 decompile:
+        // Character.m_visual (the field vanilla itself uses for the
+        // living model, e.g. ground-tilt rotation) is only populated at
+        // runtime by Awake, so it's not usable on an uninstantiated
+        // prefab asset -- but GetComponentInChildren<SkinnedMeshRenderer>
+        // walks the prefab's actual authored hierarchy directly and works
+        // fine without instantiating anything.
+        //
+        // SkinnedMeshRenderer.sharedMesh is the base bind-pose geometry
+        // (before bone deformation) -- a completely valid mesh to render
+        // statically via a plain MeshFilter/MeshRenderer, just frozen in
+        // whatever pose the model was authored/rigged in rather than a
+        // true "collapsed dead body" ragdoll pose (that pose only exists
+        // after per-instance physics settles, not as reusable prefab
+        // data). A reasonable, safe first approximation, not a perfect
+        // one -- rotation and scale are config values specifically
+        // because they'll need live tuning once this is actually seen
+        // in-game, not something to get right blind.
+        //
+        // Non-destructive by design: disables the base prefab's own
+        // renderers rather than removing any child GameObjects, so
+        // there's no risk of deleting something structurally important
+        // (the collider/ZNetView host) that this code doesn't have full
+        // visibility into.
+        static void ApplyCreatureVisual(GameObject carcassPiece, string creaturePrefabName)
+        {
+            GameObject creaturePrefab = PrefabManager.Instance.GetPrefab(creaturePrefabName);
+            SkinnedMeshRenderer source = creaturePrefab != null ? creaturePrefab.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
+            if (source == null || source.sharedMesh == null)
+            {
+                Jotunn.Logger.LogWarning($"Skinning: no mesh found on '{creaturePrefabName}' for its carcass visual, keeping the placeholder");
+                return;
+            }
+
+            foreach (Renderer r in carcassPiece.GetComponentsInChildren<Renderer>(true))
+            {
+                r.enabled = false;
+            }
+
+            GameObject visual = new GameObject("CreatureVisual");
+            visual.transform.SetParent(carcassPiece.transform, false);
+            visual.transform.localRotation = Quaternion.Euler(CorePlugin.SkinningCarcassVisualRotationX.Value, 0f, 0f);
+            visual.transform.localScale = Vector3.one * CorePlugin.SkinningCarcassVisualScale.Value;
+
+            MeshFilter filter = visual.AddComponent<MeshFilter>();
+            filter.sharedMesh = source.sharedMesh;
+            MeshRenderer meshRenderer = visual.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterials = source.sharedMaterials;
         }
 
         public static bool TryGetAnimal(string creaturePrefabName, out AnimalEntry entry)

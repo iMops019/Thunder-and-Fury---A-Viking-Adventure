@@ -164,16 +164,26 @@ and levels is ours, with our own XP curves and level-gated effects.
       failure mode (Jotunn logs an error for just that animal) if wrong.
       (2) "Multi-item carcasses would need a container redesign" turned
       out to already be solved by the two-piece design — no redesign
-      needed. (3) Carcass visuals remain a real, *not* resolved
-      limitation: investigated reusing the death Ragdoll's own mesh (it
-      doesn't offer an interactable pattern, just a delayed auto-drop
-      timer) and reusing the granted item's own world-drop visual (a
-      different interaction path — `ItemDrop` pickup, not `Pickable` —
-      that would need its own tool-gating research). Neither was a safe
-      fit for this pass; still cloning `MushroomYellow` as a placeholder.
-      Real fix needs either a 3D art pipeline (explicitly out of scope
-      for this project) or a separate research pass on one of those two
-      paths. Compiles clean. **Not yet tested in-game.**
+      needed. (3) **Carcass visual now fixed**, using the game's own art
+      rather than a Meshy/AssetBundle pipeline (discussed and explicitly
+      deferred as a separate, much bigger undertaking — needs a Unity
+      project matching Valheim's engine version, not just a generated
+      mesh): each animal's own `SkinnedMeshRenderer` is pulled straight
+      off its living creature prefab via
+      `GetComponentInChildren<SkinnedMeshRenderer>()` (confirmed this
+      works on the uninstantiated prefab asset directly — no need to go
+      through `Character.m_visual`, which is only populated at runtime by
+      `Awake`) and rendered statically on each carcass piece via a plain
+      `MeshFilter`/`MeshRenderer`, replacing the cloned base prefab's own
+      renderers (disabled, not destroyed, so nothing structurally
+      important like the `Pickable`'s collider host is at risk). Honest
+      caveat: this is the mesh's *rigged bind pose*, not a true collapsed
+      ragdoll death pose (that pose only exists per-instance after
+      physics settles, not as reusable prefab data) — a reasonable, safe
+      approximation, not a perfect one. Rotation/scale are config values
+      (`SkinningCarcassVisualRotationX`/`Scale`) specifically because
+      they'll need live tuning once actually seen in-game, not something
+      to get right blind. Compiles clean. **Not yet tested in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
       Fishing, and Skinning now built)*. Gathering: Mining (built),
       Woodcutting (built), Fishing (built), Skinning (built). Production:
