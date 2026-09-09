@@ -52,6 +52,7 @@ namespace VikingAdventure.Core
             PrefabManager.OnVanillaPrefabsAvailable += FishingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += SkinningSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += SkinningSystem.RegisterDefaults;
+            PrefabManager.OnVanillaPrefabsAvailable += SmithingSkill.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }

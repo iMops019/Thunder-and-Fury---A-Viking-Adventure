@@ -50,6 +50,8 @@ namespace VikingAdventure.RarityLoot
         public static ConfigEntry<int> SkinningKnifeWoodCost;
         public static ConfigEntry<int> SkinningKnifeFlintCost;
 
+        public static ConfigEntry<int> SmithingLegendaryCraftLevel;
+
         private void Awake()
         {
             BindConfig();
@@ -109,6 +111,10 @@ namespace VikingAdventure.RarityLoot
                 "SkinningKnife", "WoodCost", 3, "Wood required to craft a Skinning Knife.");
             SkinningKnifeFlintCost = Config.Bind(
                 "SkinningKnife", "FlintCost", 3, "Flint required to craft a Skinning Knife.");
+
+            SmithingLegendaryCraftLevel = Config.Bind(
+                "RarityLoot", "SmithingLegendaryCraftLevel", 30,
+                "Smithing level required to craft a Legendary item (vision.md: a deliberate hard gate on the top gear tier). Exact level wasn't decided in the design doc, so this is a tunable default.");
         }
 
         private void OnDestroy()

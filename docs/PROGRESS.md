@@ -185,11 +185,11 @@ and levels is ours, with our own XP curves and level-gated effects.
       they'll need live tuning once actually seen in-game, not something
       to get right blind. Compiles clean. **Not yet tested in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting, Mining,
-      Fishing, and Skinning now built)*. Gathering: Mining (built),
-      Woodcutting (built), Fishing (built), Skinning (built). Production:
-      Smithing, Cooking, Fletching, Building, Crafting. Combat: Attack,
-      Strength, Defense (broad OSRS-style stats, not per-weapon-type like
-      vanilla).
+      Fishing, Skinning, and Smithing now built)*. Gathering: Mining
+      (built), Woodcutting (built), Fishing (built), Skinning (built).
+      Production: Smithing (built), Cooking, Fletching, Building,
+      Crafting. Combat: Attack, Strength, Defense (broad OSRS-style
+      stats, not per-weapon-type like vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
       efficiency for weapon use (the "higher Attack level, less stamina
       drain in combat" mechanic). Strength = single shared damage-scaling
@@ -208,11 +208,38 @@ and levels is ours, with our own XP curves and level-gated effects.
       independently), any knife/dagger works (flavor/immersion first,
       leveled bonuses later) — built for 4 animals so
       far, see the Pillar 1 entry above for scope.
-- [ ] **Smithing tier ladder** — *(designed, one open question)*. Normal
-      gear stays as vanilla, no level gate. New Magic/Rare tiers sit
-      between normal and the existing Legendary tier. Legendary crafting
-      is hard-gated by a Smithing level threshold. **Open:** what level
-      Magic/Rare require is not decided yet.
+- [x] **Smithing** ([SkillSystem/SmithingSkill.cs](../src/Core/SkillSystem/SmithingSkill.cs), [LegendaryCraftGatePatch.cs](../src/MiniMods/RarityLoot/Patches/LegendaryCraftGatePatch.cs)) —
+      *(implemented, not yet runtime-tested — normal/Legendary halves
+      done, Magic/Rare still blocked on design)*. Sixth skill, and like
+      Skinning, no vanilla equivalent to redirect from. Confirmed
+      against the real 1.0 decompile: `InventoryGui.DoCrafting` already
+      calls `RaiseSkill(m_craftingStation.m_craftingSkill, ...)` on every
+      recipe craft — a fully generic, already-working mechanic no vanilla
+      station actually points anywhere meaningful by default, reused the
+      same way Skinning reuses `Pickable.m_pickRaiseSkill`. Set directly
+      on Workbench/Forge/Black Forge (vision.md's "Stone/Bronze/Iron"
+      ladder) rather than redirecting vanilla's `Crafting` SkillType
+      wholesale — that field defaults to `Crafting` in code, but whether
+      any given station's *real* prefab data overrides that couldn't be
+      confirmed (serialized Unity data, not visible in the decompiled
+      C#), so a blanket redirect risked silently pulling in Cooking's
+      Cauldron or another unrelated station. Also confirmed
+      `DoCrafting` only ever handles Recipe objects (weapons/tools/
+      consumables) — building Piece placement is a fully separate system
+      with no skill tied to it — so setting this on the Workbench can't
+      accidentally grant Smithing XP for building a wall. Legendary
+      gear's level gate (vision.md, locked in) lives in RarityLoot
+      instead: a Prefix on `Player.HaveRequirements(Recipe,...)` — the
+      exact check `DoCrafting` gates the real craft attempt on, not just
+      a UI hint — blocks crafting below a config-tunable Smithing level
+      (default 30; vision.md never decided the exact number) for any
+      item RarityLoot's existing `ItemRollTrigger` registry already
+      marks Legendary (Voltun's Set), reusing that registry rather than
+      adding a second way to ask "is this item Legendary." **Still
+      blocked:** Magic/Rare tiers for ordinary vanilla gear — same
+      undesigned "which items, what odds" question flagged under
+      RarityLoot's own Pillar 3 entry, unrelated to what Smithing itself
+      needed to do. Compiles clean. **Not yet tested in-game.**
 - [ ] **Cooking** — *(designed, one open question — priority skill)*.
       Level effect = reduced burn/fail chance, not speed or access; no
       recipe-level-gating (biome progression already paces ingredients).
