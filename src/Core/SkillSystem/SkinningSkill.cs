@@ -26,12 +26,13 @@ namespace VikingAdventure.Core.SkillSystem
     {
         public const string Identifier = "com.vikingadventure.core.skill.skinning";
 
-        // Shared with RarityLoot's SkinningKnife.cs -- the exact prefab
-        // name the Skinning Knife item must be registered under, so
-        // Core's tool-gate check and RarityLoot's item registration
-        // agree without RarityLoot's class needing to be referenced from
-        // Core (wrong dependency direction; only RarityLoot depends on
-        // Core, not the other way).
+        // The prefab name RarityLoot's SkinningKnife.cs registers its
+        // item under. Not used for tool-gating anymore (Patches/
+        // SkinningPatches.cs checks weapon skill type == Knives, so any
+        // knife/dagger qualifies -- "just need a basic flint/stone knife
+        // or dagger," this session's call) -- kept as the one place that
+        // name is spelled out, so RarityLoot's registration and any
+        // future reference to it stay in sync.
         public const string SkinningKnifePrefabName = "SkinningKnife";
 
         public static global::Skills.SkillType Type { get; private set; }
@@ -42,7 +43,7 @@ namespace VikingAdventure.Core.SkillSystem
             {
                 Identifier = Identifier,
                 Name = "Skinning",
-                Description = "Harvesting hide and meat from a carcass with a Skinning Knife.",
+                Description = "Skinning and butchering carcasses with a knife or dagger for hide and meat.",
                 IncreaseStep = 1f,
             };
 

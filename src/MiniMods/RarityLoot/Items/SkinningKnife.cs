@@ -7,17 +7,20 @@ namespace VikingAdventure.RarityLoot.Items
 {
     // ---- Skinning Knife ----
     //
-    // Second planned Pillar 3 item (docs/valheim-mod-vision.md): required
-    // to harvest carcasses under Core's new Skinning mechanic
+    // Second planned Pillar 3 item (docs/valheim-mod-vision.md): a basic,
+    // cheap, RP-flavored knife for Core's Skinning/Butchering mechanic
     // (Core/Patches/SkinningPatches.cs). Built the moment Skinning itself
     // landed, matching docs/PROGRESS.md's own note that this item "pairs
     // with Core's Skinning work when that starts, not before."
     //
-    // Registered under the exact prefab name
-    // SkinningSkill.SkinningKnifePrefabName -- Core's carcass tool-gate
-    // check compares against that same constant, so this item and Core's
-    // check can't drift out of sync even though Core has no reference
-    // back to this class (RarityLoot depends on Core, not the reverse).
+    // Not the exclusive gate: Core checks the equipped item's weapon
+    // skill type (any Skills.SkillType.Knives tool qualifies, vanilla's
+    // starting Knife included), not this item's identity specifically --
+    // per this session's clarification, "just need a basic flint/stone
+    // knife or dagger," not one hardcoded named item. This one exists
+    // for players who want a purpose-named tool for the job (and to give
+    // an early, cheap option independent of whatever knife they happen
+    // to already own).
     //
     // Same verification caveat as Stone Pickaxe: "Knife" as the base
     // prefab and "Wood"/"Flint" as requirement item ids are standard,
