@@ -57,7 +57,11 @@ src/
   MiniMods/
     ExampleMiniMod/         Template — copy this folder to start a new
                              mini-mod that depends on Core.
-    RarityLoot/              Magic/Rare/Legendary item tiers. Depends on Core.
+    RarityLoot/              Magic/Rare/Legendary item tiers. Depends on
+                             Core. Generic rolled-affix framework
+                             implemented; Stone Pickaxe and Voltun's Set
+                             (Legendary) use it. Rolling ordinary vanilla
+                             gear into Magic/Rare is still undesigned.
     Quests/                  Objective-based quests + quest giver NPC(s).
                              Depends on Core.
     ValheimQoL/              QoL pillar — every planned feature implemented
@@ -110,6 +114,11 @@ others.
      new terminal/IDE window for it to take effect.
 3. First build: `dotnet build -m:1` at the repo root (see the race-condition
    note above). Regular builds after that can drop `-m:1`.
+4. Optional but recommended: search Thunderstore for "BepInEx
+   ConfigurationManager" and install it as a separate mod. Every
+   mini-mod's tunables are plain BepInEx `Config.Bind` entries, so this
+   gives an in-game F1 menu to change them live — material costs,
+   multipliers, everything — without a recompile.
 
 ## Deploying a build for local testing
 

@@ -94,11 +94,43 @@ What I want: new items/equipment built from Valheim's existing assets
 (retextures, recombinations, stat variants) rather than modeled from
 scratch, tied into the skill system for level-gated crafting.
 
-- [ ] **RarityLoot tier list + roll mechanics** — *(not designed — blocks
-      all RarityLoot code)*. What tiers exist beyond the already-decided
-      Magic/Rare/Legendary names, and what a rarity roll actually grants,
-      isn't decided. `RarityLootPlugin.cs` is currently a stub that only
-      logs on load.
+- [ ] **RarityLoot tier list + roll mechanics for ORDINARY vanilla gear**
+      — *(still not designed — blocks giving random vanilla items
+      Magic/Rare rolls)*. What's now decided and built (see the generic
+      affix framework below): the roll/affix *mechanism* itself, and that
+      Magic/Rare/Legendary all draw from one shared affix pool. What's
+      still undecided: whether/how a normal dropped or crafted vanilla
+      item (a found Bronze Sword, say) can roll into Magic/Rare, and at
+      what odds — that's a separate, bigger question (which items are
+      eligible, hooking every acquisition path in the whole game) from
+      what today's session scoped. Only Voltun's Set uses the framework
+      so far, and it's always Legendary by definition, not randomly
+      rolled.
+- [x] **Generic affix/rarity framework** ([Affixes/](../src/MiniMods/RarityLoot/Affixes/), [Patches/ItemRollTrigger.cs](../src/MiniMods/RarityLoot/Patches/ItemRollTrigger.cs), [Patches/AffixApplication.cs](../src/MiniMods/RarityLoot/Patches/AffixApplication.cs)) —
+      *(implemented, not yet runtime-tested)*. PoE-style rolled stats:
+      confirmed against the real 1.0 decompile that
+      `ItemDrop.ItemData.m_customData` (a per-item-instance
+      `Dictionary<string,string>`) is genuinely written/read by vanilla's
+      own save/load code and survives `ItemData.Clone()` — real
+      foundation, not a hack. A 3-affix starter pool (Armor, Max Health,
+      %Damage) rolls onto tracked items the moment their `ItemData` is
+      cloned (`ItemRollTrigger`, patches `ItemData.Clone()` — one hook
+      covers crafting, looting, and future boss drops alike, since they
+      all clone through this same method). Bonuses apply via Postfix
+      patches on `ItemData.GetArmor`/`GetDamage` and
+      `Character.GetMaxHealth` (player-scoped, scans equipped items) —
+      deliberately never touches `ItemData.m_shared`, which is the same
+      object shared by every instance of that item type; mutating it
+      would rewrite every copy in the world, not just one roll. Tooltip
+      patch shows the rolled affixes + a color-coded rarity name.
+      Compiles clean. **Not yet tested in-game.**
+- [ ] **BepInEx.ConfigurationManager as a setup step** — *(recommended,
+      not yet added to docs)*. Every material cost/multiplier below is a
+      `Config.Bind` entry, so installing that companion mod (a separate
+      Thunderstore download, not something this repo builds) gives an
+      in-game F1 menu to tune Legendary recipes live, no recompile — this
+      is the "dev tool" asked for this session. Just needs a line added
+      to the README setup steps, not code.
 - [ ] **Stone Pickaxe** ([StonePickaxe.cs](../src/MiniMods/RarityLoot/Items/StonePickaxe.cs)) —
       *(implemented, not yet runtime-tested)*. Jotunn `CustomItem` clones
       the real vanilla `PickaxeAntler` prefab wholesale (model,
@@ -124,14 +156,27 @@ scratch, tied into the skill system for level-gated crafting.
       still just a stub — building the knife item alone right now would
       just be a prop with nothing to do. Pairs with Core's Skinning work
       when that starts, not before.
-- [ ] **Named-hero gear pattern** — *(designed as a template)*. Hand-
-      crafted unique items that stack multiple bonus effects at once
-      (e.g. Voltun's Hatchet: +50% log yield, extra tree damage, faster
-      chop, double XP simultaneously) rather than one flat stat bump.
-- [ ] **Voltun's Set** (Hatchet + Pickaxe) — *(designed, one open
-      question)*. Findable/completable in Black Forest. **Open:**
-      acquisition method — crafted from collected materials vs. a straight
-      drop chance — still undecided.
+- [x] **Named-hero gear pattern** ([Patches/ItemRollTrigger.cs](../src/MiniMods/RarityLoot/Patches/ItemRollTrigger.cs)) —
+      *(implemented generically)*. `ItemRollTrigger.Register` +
+      `ItemRoller` work for any named set, not just Voltun's — a second
+      hero set later is new data (an `Items/*.cs` file + config entries),
+      no new plumbing.
+- [ ] **Voltun's Set** (Hatchet + Pickaxe) ([Items/VoltunsSet.cs](../src/MiniMods/RarityLoot/Items/VoltunsSet.cs)) —
+      *(implemented, not yet runtime-tested — two bonuses deliberately
+      deferred)*. Acquisition question resolved for now: crafted from
+      Wood + Copper + Bronze at the Forge (config amounts), spanning
+      Meadows + Black Forest as discussed this session — swapping to a
+      boss-drop model later only means moving where
+      `ItemRollTrigger.Register` gets called, not touching the affix
+      system. Both items clone a real vanilla base (`Hatchet`,
+      `PickaxeAntler`) and get a damage + swing-speed multiplier (relative
+      to the real cloned values, config-driven) plus 2 rolled Legendary
+      affixes from the shared pool. **Deferred, not faked:** vision.md's
+      "+50% log yield" needs a patch on tree/resource drop-table logic
+      (not researched yet) and "double XP" needs Core's skill system
+      (doesn't exist yet) — both left out rather than stubbed with fake
+      numbers. Same base-prefab-name verification caveat as Stone
+      Pickaxe. Compiles clean. **Not yet tested in-game.**
 - [ ] **Future named-hero sets** beyond Voltun's — *(not designed)*. The
       pattern is set; no second or third hero/set has been thought
       through yet.

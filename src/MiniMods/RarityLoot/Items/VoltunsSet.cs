@@ -1,0 +1,116 @@
+using Jotunn.Configs;
+using Jotunn.Entities;
+using Jotunn.Managers;
+using VikingAdventure.RarityLoot.Affixes;
+using VikingAdventure.RarityLoot.Patches;
+
+namespace VikingAdventure.RarityLoot.Items
+{
+    // ---- Voltun's Set (Hatchet + Pickaxe) ----
+    //
+    // docs/valheim-mod-vision.md: a named-hero Legendary set, findable in
+    // Black Forest, stacking multiple bonus effects rather than one flat
+    // stat bump. Two things about the design doc's exact bonus list
+    // ("+50% log yield, extra tree damage, faster chop, double XP") had
+    // to be scoped down for this first pass, both flagged rather than
+    // faked:
+    //  - Log yield needs a patch on the tree/resource drop-table logic,
+    //    which hasn't been researched yet -- deferred.
+    //  - Double XP needs Core's custom skill system, which doesn't exist
+    //    yet (still a stub plugin) -- deferred, pairs with that work.
+    // What's implemented: extra chop/mining damage and faster swing
+    // speed, both scaled relative to whatever the real cloned base
+    // item's values turn out to be at runtime (same pattern as
+    // StonePickaxe), plus this session's new piece -- both items also
+    // roll Legendary-tier affixes from the shared AffixPool on top of
+    // their fixed identity bonuses, so no two Voltun's items are
+    // identical.
+    //
+    // Acquisition: crafted from Wood + Copper + Bronze at the Forge --
+    // spans Meadows (Wood) and Black Forest (Copper, Bronze -- Bronze
+    // itself already gates on Copper+Tin+Coal, so it's a meaningfully
+    // "grind for it" ingredient) per this session's direction. Vision.md
+    // had left Voltun's Set's acquisition method as an open question
+    // (recipe vs. drop chance) -- this picks recipe-based for now since
+    // that's what got the concrete discussion; swapping to a boss-drop
+    // model later doesn't require touching the affix system, just where
+    // ItemRollTrigger.Register happens.
+    //
+    // Same verification caveat as StonePickaxe: "Hatchet" as the base
+    // weapon prefab and "Wood"/"Copper"/"Bronze" as requirement item ids
+    // are standard, well-established Jotunn/Valheim names, not
+    // independently confirmed against this install's binary asset data.
+    public static class VoltunsSet
+    {
+        public static void Register()
+        {
+            RegisterHatchet();
+            RegisterPickaxe();
+        }
+
+        static void RegisterHatchet()
+        {
+            var config = new ItemConfig
+            {
+                Name = "Voltun's Hatchet",
+                Description = "A woodsman's legend given a blade. Hits harder and faster than any axe of its tier.",
+                CraftingStation = CraftingStations.Forge,
+                Requirements = new[]
+                {
+                    new RequirementConfig("Wood", RarityLootPlugin.VoltunHatchetWoodCost.Value),
+                    new RequirementConfig("Copper", RarityLootPlugin.VoltunHatchetCopperCost.Value),
+                    new RequirementConfig("Bronze", RarityLootPlugin.VoltunHatchetBronzeCost.Value),
+                },
+            };
+
+            var hatchet = new CustomItem("VoltunsHatchet", "Hatchet", config);
+            if (!hatchet.IsValid())
+            {
+                Jotunn.Logger.LogError("VoltunsHatchet item is not valid, skipping registration");
+                return;
+            }
+
+            var shared = hatchet.ItemDrop.m_itemData.m_shared;
+            // Baked directly into this item's own cloned SharedData, not
+            // per-instance m_customData -- safe here because "VoltunsHatchet"
+            // is its own dedicated clone, not shared with any unrelated
+            // item, and every Voltun's Hatchet should have this same fixed
+            // identity profile (only the rolled affixes below vary per copy).
+            shared.m_damages.m_chop *= RarityLootPlugin.VoltunDamageMultiplier.Value;
+            shared.m_attack.m_speedFactor *= RarityLootPlugin.VoltunSpeedMultiplier.Value;
+
+            ItemManager.Instance.AddItem(hatchet);
+            ItemRollTrigger.Register(shared, RarityTier.Legendary, RarityLootPlugin.LegendaryAffixCount.Value);
+        }
+
+        static void RegisterPickaxe()
+        {
+            var config = new ItemConfig
+            {
+                Name = "Voltun's Pickaxe",
+                Description = "Mirrors the Hatchet's legend in stone-breaking form. Bites deeper and swings faster than an Antler Pickaxe.",
+                CraftingStation = CraftingStations.Forge,
+                Requirements = new[]
+                {
+                    new RequirementConfig("Wood", RarityLootPlugin.VoltunPickaxeWoodCost.Value),
+                    new RequirementConfig("Copper", RarityLootPlugin.VoltunPickaxeCopperCost.Value),
+                    new RequirementConfig("Bronze", RarityLootPlugin.VoltunPickaxeBronzeCost.Value),
+                },
+            };
+
+            var pickaxe = new CustomItem("VoltunsPickaxe", "PickaxeAntler", config);
+            if (!pickaxe.IsValid())
+            {
+                Jotunn.Logger.LogError("VoltunsPickaxe item is not valid, skipping registration");
+                return;
+            }
+
+            var shared = pickaxe.ItemDrop.m_itemData.m_shared;
+            shared.m_damages.m_pickaxe *= RarityLootPlugin.VoltunDamageMultiplier.Value;
+            shared.m_attack.m_speedFactor *= RarityLootPlugin.VoltunSpeedMultiplier.Value;
+
+            ItemManager.Instance.AddItem(pickaxe);
+            ItemRollTrigger.Register(shared, RarityTier.Legendary, RarityLootPlugin.LegendaryAffixCount.Value);
+        }
+    }
+}
