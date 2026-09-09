@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Globalization;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -10,20 +12,18 @@ namespace VikingAdventure.RarityLoot.Items
     //
     // docs/valheim-mod-vision.md: a named-hero Legendary set, findable in
     // Black Forest, stacking multiple bonus effects rather than one flat
-    // stat bump. Two things about the design doc's exact bonus list
-    // ("+50% log yield, extra tree damage, faster chop, double XP") had
-    // to be scoped down for this first pass, both flagged rather than
-    // faked:
-    //  - Log yield needs a patch on the tree/resource drop-table logic,
-    //    which hasn't been researched yet -- deferred.
-    //  - Double XP needs Core's custom skill system, which doesn't exist
-    //    yet (still a stub plugin) -- deferred, pairs with that work.
-    // What's implemented: extra chop/mining damage and faster swing
-    // speed, both scaled relative to whatever the real cloned base
-    // item's values turn out to be at runtime (same pattern as
-    // StonePickaxe), plus this session's new piece -- both items also
-    // roll Legendary-tier affixes from the shared AffixPool on top of
-    // their fixed identity bonuses, so no two Voltun's items are
+    // stat bump. One thing about the design doc's exact bonus list
+    // ("+50% log yield, extra tree damage, faster chop, double XP") is
+    // still scoped down, flagged rather than faked: double XP needs
+    // Core's custom skill system, which doesn't exist yet (still a stub
+    // plugin) -- deferred, pairs with that work.
+    // What's implemented: extra chop/mining damage, faster swing speed,
+    // and now log yield (LogYieldPatch.cs -- researched this session:
+    // TreeLog.Destroy is where fallen logs turn into Wood items). All
+    // scaled relative to whatever the real cloned base item's values
+    // turn out to be at runtime (same pattern as StonePickaxe). Both
+    // items also roll Legendary-tier affixes from the shared AffixPool on
+    // top of their fixed identity bonuses, so no two Voltun's items are
     // identical.
     //
     // Acquisition: crafted from Wood + Copper + Bronze at the Forge --
@@ -78,6 +78,17 @@ namespace VikingAdventure.RarityLoot.Items
             // identity profile (only the rolled affixes below vary per copy).
             shared.m_damages.m_chop *= RarityLootPlugin.VoltunDamageMultiplier.Value;
             shared.m_attack.m_speedFactor *= RarityLootPlugin.VoltunSpeedMultiplier.Value;
+
+            // Fixed identity bonus, not a rolled affix -- baked into the
+            // template ItemData's own m_customData so every clone (every
+            // actual Hatchet a player holds) inherits it automatically,
+            // since Clone() deep-copies m_customData. LogYieldPatch reads
+            // this same key generically, so any future item could grant
+            // the same bonus the same way.
+            var hatchetData = hatchet.ItemDrop.m_itemData;
+            if (hatchetData.m_customData == null) hatchetData.m_customData = new Dictionary<string, string>();
+            hatchetData.m_customData[LogYieldPatch.LogYieldBonusKey] =
+                RarityLootPlugin.VoltunLogYieldBonusPercent.Value.ToString(CultureInfo.InvariantCulture);
 
             ItemManager.Instance.AddItem(hatchet);
             ItemRollTrigger.Register(shared, RarityTier.Legendary, RarityLootPlugin.LegendaryAffixCount.Value);

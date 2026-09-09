@@ -162,7 +162,7 @@ scratch, tied into the skill system for level-gated crafting.
       hero set later is new data (an `Items/*.cs` file + config entries),
       no new plumbing.
 - [ ] **Voltun's Set** (Hatchet + Pickaxe) ([Items/VoltunsSet.cs](../src/MiniMods/RarityLoot/Items/VoltunsSet.cs)) —
-      *(implemented, not yet runtime-tested — two bonuses deliberately
+      *(implemented, not yet runtime-tested — one bonus still deliberately
       deferred)*. Acquisition question resolved for now: crafted from
       Wood + Copper + Bronze at the Forge (config amounts), spanning
       Meadows + Black Forest as discussed this session — swapping to a
@@ -171,12 +171,18 @@ scratch, tied into the skill system for level-gated crafting.
       system. Both items clone a real vanilla base (`Hatchet`,
       `PickaxeAntler`) and get a damage + swing-speed multiplier (relative
       to the real cloned values, config-driven) plus 2 rolled Legendary
-      affixes from the shared pool. **Deferred, not faked:** vision.md's
-      "+50% log yield" needs a patch on tree/resource drop-table logic
-      (not researched yet) and "double XP" needs Core's skill system
-      (doesn't exist yet) — both left out rather than stubbed with fake
-      numbers. Same base-prefab-name verification caveat as Stone
-      Pickaxe. Compiles clean. **Not yet tested in-game.**
+      affixes from the shared pool. Log yield researched and implemented
+      ([Patches/LogYieldPatch.cs](../src/MiniMods/RarityLoot/Patches/LogYieldPatch.cs)):
+      `TreeLog.Destroy(HitData)` is where a fully-chopped log spawns its
+      "Wood" item drops, but the per-item drop count is an unreachable
+      local variable — sidestepped rather than needing a Transpiler, by
+      independently rolling and spawning bonus drops in a Prefix (reads
+      the tree's own drop table before vanilla's `Destroy()` runs and
+      destroys the GameObject those fields live on). **Still deferred, not
+      faked:** vision.md's "double XP" needs Core's skill system, which
+      doesn't exist yet — pairs with that work, not before. Same
+      base-prefab-name verification caveat as Stone Pickaxe. Compiles
+      clean. **Not yet tested in-game.**
 - [ ] **Future named-hero sets** beyond Voltun's — *(not designed)*. The
       pattern is set; no second or third hero/set has been thought
       through yet.

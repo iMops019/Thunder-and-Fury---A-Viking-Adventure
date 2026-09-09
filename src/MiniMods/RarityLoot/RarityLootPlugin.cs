@@ -39,6 +39,7 @@ namespace VikingAdventure.RarityLoot
 
         public static ConfigEntry<float> VoltunDamageMultiplier;
         public static ConfigEntry<float> VoltunSpeedMultiplier;
+        public static ConfigEntry<float> VoltunLogYieldBonusPercent;
         public static ConfigEntry<int> VoltunHatchetWoodCost;
         public static ConfigEntry<int> VoltunHatchetCopperCost;
         public static ConfigEntry<int> VoltunHatchetBronzeCost;
@@ -81,6 +82,10 @@ namespace VikingAdventure.RarityLoot
             VoltunSpeedMultiplier = Config.Bind(
                 "VoltunsSet", "SpeedMultiplier", 1.2f,
                 "Voltun's items' swing speed factor relative to the vanilla item they're based on. 1.0 = same as vanilla.");
+
+            VoltunLogYieldBonusPercent = Config.Bind(
+                "VoltunsSet", "HatchetLogYieldBonusPercent", 50f,
+                "Extra Wood dropped per chopped log while wielding Voltun's Hatchet, as a percentage. 50 = +50% more Wood.");
 
             VoltunHatchetWoodCost = Config.Bind(
                 "VoltunsSet", "HatchetWoodCost", 20, "Wood required to craft Voltun's Hatchet.");
