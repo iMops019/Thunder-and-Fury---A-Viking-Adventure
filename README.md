@@ -49,11 +49,13 @@ actual post-1.0 build specifically — see the decompile note below):
 
 ```
 src/
-  Core/                     Shared framework: Skill system (Jotunn
-                             SkillManager wrapper + our own XP curves),
+  Core/                     Shared framework: skill system (generic
+                             vanilla-XP redirect + Jotunn registration,
+                             reuses vanilla's own leveling curve),
                              shared UI theme, shared keybinds, shared
                              modifier registry. Everything else depends
-                             on this.
+                             on this. Woodcutting is the first skill,
+                             built end-to-end; not yet runtime-tested.
   MiniMods/
     ExampleMiniMod/         Template — copy this folder to start a new
                              mini-mod that depends on Core.

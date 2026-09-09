@@ -23,14 +23,39 @@ own skills feel — vanilla skills stay technically present (engine needs
 them) but are neutralized and hidden; every skill the player actually sees
 and levels is ours, with our own XP curves and level-gated effects.
 
-- [ ] **Custom skill system architecture** — *(designed only, zero code)*.
-      Vanilla skill damage/stamina bonuses patched out and hidden from UI
-      entirely; our skills registered via Jotunn's native skill support.
-      Nothing in `Core` beyond a stub plugin that logs on load.
-- [ ] **Skill list** — *(designed, first pass)*. Gathering: Mining,
-      Woodcutting, Fishing, Skinning. Production: Smithing, Cooking,
-      Fletching, Building, Crafting. Combat: Attack, Strength, Defense
-      (broad OSRS-style stats, not per-weapon-type like vanilla).
+- [ ] **Custom skill system architecture** — *(core pattern proven on one
+      skill, not yet generalized to the other 8 — not yet runtime-tested)*.
+      `SkillSystem/SkillXpRedirect.cs`: a generic Prefix on
+      `Player.RaiseSkill` (confirmed the real single choke point every XP
+      gain funnels through — weapon attacks, running, swimming, sneaking,
+      blocking, dodging, jumping, building) redirects any registered
+      vanilla `SkillType` into our custom one and skips the original,
+      which is what "neutralized" actually means in code. Custom skills
+      register via Jotunn's `SkillManager.AddSkill` and reuse vanilla's
+      own leveling curve (confirmed from the decompile:
+      `Mathf.Pow(level+1, 1.5) * 0.5 + 0.5`) rather than needing a
+      bespoke one — satisfies vision.md's "smooth, no artificial walls"
+      for free. **Not done:** hiding vanilla skills from the in-game
+      skill list UI — real UI work, not yet researched, Pillar 2
+      territory.
+- [x] **Woodcutting** ([SkillSystem/WoodcuttingSkill.cs](../src/Core/SkillSystem/WoodcuttingSkill.cs), [Patches/WoodcuttingPatches.cs](../src/Core/Patches/WoodcuttingPatches.cs)) —
+      *(implemented end-to-end, not yet runtime-tested)*. First skill,
+      proving the whole loop: registration, XP redirect (vanilla
+      WoodCutting → ours), per-level tree/log damage scaling (config:
+      +1%/level default — confirmed `TreeBase`/`TreeLog.RPC_Damage` both
+      process hits through the same `HitData.m_damage` struct, scaled in
+      a Prefix), and the level-15 milestone (2x XP + 25% bonus log yield,
+      config levels/amounts — the yield half reuses the log-drop-table
+      research from RarityLoot's LogYieldPatch, reimplemented here rather
+      than shared since Core can't depend on RarityLoot). **Not done:**
+      chop SPEED scaling — vision.md's other half of "level increases
+      speed + damage" — needs the real attack-speed-application hook,
+      not yet researched. Compiles clean. **Not yet tested in-game.**
+- [ ] **Skill list** — *(designed, first pass; Woodcutting now built)*.
+      Gathering: Mining, Woodcutting (built), Fishing, Skinning.
+      Production: Smithing, Cooking, Fletching, Building, Crafting.
+      Combat: Attack, Strength, Defense (broad OSRS-style stats, not
+      per-weapon-type like vanilla).
 - [ ] **Combat stats** — *(designed)*. Attack = attack speed + stamina
       efficiency for weapon use (the "higher Attack level, less stamina
       drain in combat" mechanic). Strength = single shared damage-scaling
