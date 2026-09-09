@@ -1,7 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Managers;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Mining ----
     //
@@ -21,7 +21,7 @@ namespace VikingAdventure.Core.SkillSystem
     // for the ore-yield half.
     public static class MiningSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.mining";
+        public const string Identifier = "com.ThunderFury.core.skill.mining";
 
         public static global::Skills.SkillType Type { get; private set; }
 

@@ -1,8 +1,8 @@
 using HarmonyLib;
-using VikingAdventure.Core.SkillSystem;
-using VikingAdventure.RarityLoot.Affixes;
+using ThunderFury.Core.SkillSystem;
+using ThunderFury.RarityLoot.Affixes;
 
-namespace VikingAdventure.RarityLoot.Patches
+namespace ThunderFury.RarityLoot.Patches
 {
     // ---- Legendary crafting requires a Smithing level ----
     //

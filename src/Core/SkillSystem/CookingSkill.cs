@@ -1,7 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Managers;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Cooking ----
     //
@@ -34,7 +34,7 @@ namespace VikingAdventure.Core.SkillSystem
     // so nothing invented for it here.
     public static class CookingSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.cooking";
+        public const string Identifier = "com.ThunderFury.core.skill.cooking";
 
         public static global::Skills.SkillType Type { get; private set; }
 

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using HarmonyLib;
-using VikingAdventure.RarityLoot.Affixes;
+using ThunderFury.RarityLoot.Affixes;
 
-namespace VikingAdventure.RarityLoot.Patches
+namespace ThunderFury.RarityLoot.Patches
 {
     // Confirmed against the real 1.0 decompile: Inventory.AddItem clones
     // its source ItemData (ItemDrop.ItemData.Clone()) to create the

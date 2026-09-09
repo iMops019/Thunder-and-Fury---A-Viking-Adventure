@@ -3,7 +3,7 @@ using System.Globalization;
 using HarmonyLib;
 using UnityEngine;
 
-namespace VikingAdventure.RarityLoot.Patches
+namespace ThunderFury.RarityLoot.Patches
 {
     // ---- Log yield bonus (Voltun's Hatchet's deferred "+50% log yield") ----
     //

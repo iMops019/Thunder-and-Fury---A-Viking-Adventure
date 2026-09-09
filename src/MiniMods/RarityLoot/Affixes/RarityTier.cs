@@ -1,4 +1,4 @@
-namespace VikingAdventure.RarityLoot.Affixes
+namespace ThunderFury.RarityLoot.Affixes
 {
     // Normal isn't used by the roller (nothing rolls itself down to
     // Normal), but it's here so "what tier is this item" always has a

@@ -1,4 +1,4 @@
-# Viking Adventure Mod
+# Thunder & Fury - A Viking Adventure Mod
 
 A cozy-grinding Valheim RPG overhaul: OSRS-inspired skills, magic/rare/
 legendary loot, real quests, and a QoL layer — split into a shared **Core**

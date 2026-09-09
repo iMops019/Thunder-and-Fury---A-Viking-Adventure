@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace VikingAdventure.RarityLoot.Affixes
+namespace ThunderFury.RarityLoot.Affixes
 {
     // The shared pool every Magic/Rare/Legendary item rolls from. Starter
     // set for the first pass -- three affixes covering the stats most

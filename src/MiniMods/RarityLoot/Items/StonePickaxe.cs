@@ -2,7 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 
-namespace VikingAdventure.RarityLoot.Items
+namespace ThunderFury.RarityLoot.Items
 {
     // ---- Stone Pickaxe ----
     //

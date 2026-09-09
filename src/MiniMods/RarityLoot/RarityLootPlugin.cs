@@ -3,10 +3,10 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Managers;
 using Jotunn.Utils;
-using VikingAdventure.Core;
-using VikingAdventure.RarityLoot.Items;
+using ThunderFury.Core;
+using ThunderFury.RarityLoot.Items;
 
-namespace VikingAdventure.RarityLoot
+namespace ThunderFury.RarityLoot
 {
     // Magic/Rare/Legendary item tiers on top of vanilla items. The
     // general tier list and roll mechanics for ordinary vanilla gear are
@@ -25,8 +25,8 @@ namespace VikingAdventure.RarityLoot
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     public class RarityLootPlugin : BaseUnityPlugin
     {
-        public const string PluginGUID = "com.vikingadventure.rarityloot";
-        public const string PluginName = "VikingAdventure.RarityLoot";
+        public const string PluginGUID = "com.ThunderFury.rarityloot";
+        public const string PluginName = "ThunderFury.RarityLoot";
         public const string PluginVersion = "0.1.0";
 
         private readonly Harmony _harmony = new Harmony(PluginGUID);

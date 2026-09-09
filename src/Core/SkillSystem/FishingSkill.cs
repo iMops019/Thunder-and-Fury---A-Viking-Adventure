@@ -1,7 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Managers;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Fishing ----
     //
@@ -32,7 +32,7 @@ namespace VikingAdventure.Core.SkillSystem
     // (Stone Pickaxe, Voltun's Set) lives in RarityLoot rather than here.
     public static class FishingSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.fishing";
+        public const string Identifier = "com.ThunderFury.core.skill.fishing";
 
         public static global::Skills.SkillType Type { get; private set; }
 

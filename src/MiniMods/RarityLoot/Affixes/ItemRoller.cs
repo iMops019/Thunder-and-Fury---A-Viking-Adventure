@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-namespace VikingAdventure.RarityLoot.Affixes
+namespace ThunderFury.RarityLoot.Affixes
 {
     // Rolls and reads rarity/affix data on a specific item INSTANCE via
     // ItemDrop.ItemData.m_customData -- confirmed against the real 1.0

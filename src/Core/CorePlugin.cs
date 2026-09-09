@@ -3,10 +3,10 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Managers;
 using Jotunn.Utils;
-using VikingAdventure.Core.Patches;
-using VikingAdventure.Core.SkillSystem;
+using ThunderFury.Core.Patches;
+using ThunderFury.Core.SkillSystem;
 
-namespace VikingAdventure.Core
+namespace ThunderFury.Core
 {
     // Shared framework mod: config, shared prefabs/data, and any cross-cutting
     // hooks the mini-mods below depend on. Mini-mods declare a
@@ -20,8 +20,8 @@ namespace VikingAdventure.Core
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     public class CorePlugin : BaseUnityPlugin
     {
-        public const string PluginGUID = "com.vikingadventure.core";
-        public const string PluginName = "VikingAdventure.Core";
+        public const string PluginGUID = "com.ThunderFury.core";
+        public const string PluginName = "ThunderFury.Core";
         public const string PluginVersion = "0.1.0";
 
         private readonly Harmony _harmony = new Harmony(PluginGUID);

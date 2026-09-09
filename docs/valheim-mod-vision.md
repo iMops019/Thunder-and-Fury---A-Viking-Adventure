@@ -1,4 +1,4 @@
-# Valheim RPG Overhaul Mod — Project Vision
+# Thunder & Fury - A Viking Adventure Mod — Project Vision
 
 ## Core Concept
 Turn Valheim's survival-crafting loop into a more RPG-driven experience, OSRS-inspired skilling at the center, built on top of Valheim's existing assets rather than replacing them.

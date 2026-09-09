@@ -3,9 +3,9 @@ using System.Linq;
 using HarmonyLib;
 using Jotunn.Managers;
 using UnityEngine;
-using VikingAdventure.Core.SkillSystem;
+using ThunderFury.Core.SkillSystem;
 
-namespace VikingAdventure.Core.Patches
+namespace ThunderFury.Core.Patches
 {
     // ---- Skinning and Butchering: carcasses instead of auto-drop ----
     //

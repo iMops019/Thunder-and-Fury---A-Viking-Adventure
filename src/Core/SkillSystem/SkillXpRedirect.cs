@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Generic vanilla-skill -> custom-skill XP redirect ----
     //

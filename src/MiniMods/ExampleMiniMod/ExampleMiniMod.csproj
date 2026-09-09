@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>VikingAdventure.ExampleMiniMod</AssemblyName>
-    <RootNamespace>VikingAdventure.ExampleMiniMod</RootNamespace>
+    <AssemblyName>ThunderFury.ExampleMiniMod</AssemblyName>
+    <RootNamespace>ThunderFury.ExampleMiniMod</RootNamespace>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 

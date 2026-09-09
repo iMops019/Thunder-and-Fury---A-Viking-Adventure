@@ -1,8 +1,8 @@
 using System.Text;
 using HarmonyLib;
-using VikingAdventure.RarityLoot.Affixes;
+using ThunderFury.RarityLoot.Affixes;
 
-namespace VikingAdventure.RarityLoot.Patches
+namespace ThunderFury.RarityLoot.Patches
 {
     // Reads a rolled item's own m_customData and adds the bonus on top of
     // vanilla's own calculation -- never touches ItemData.m_shared (see

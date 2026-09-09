@@ -1,7 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Managers;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Woodcutting ----
     //
@@ -17,7 +17,7 @@ namespace VikingAdventure.Core.SkillSystem
     // effects on top (Patches/WoodcuttingPatches.cs).
     public static class WoodcuttingSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.woodcutting";
+        public const string Identifier = "com.ThunderFury.core.skill.woodcutting";
 
         public static global::Skills.SkillType Type { get; private set; }
 

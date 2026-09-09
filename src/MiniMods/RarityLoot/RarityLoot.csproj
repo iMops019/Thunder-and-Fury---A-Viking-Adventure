@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AssemblyName>VikingAdventure.RarityLoot</AssemblyName>
-    <RootNamespace>VikingAdventure.RarityLoot</RootNamespace>
+    <AssemblyName>ThunderFury.RarityLoot</AssemblyName>
+    <RootNamespace>ThunderFury.RarityLoot</RootNamespace>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 

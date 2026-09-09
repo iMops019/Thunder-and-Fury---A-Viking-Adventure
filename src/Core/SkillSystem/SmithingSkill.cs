@@ -2,7 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Managers;
 using UnityEngine;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Smithing ----
     //
@@ -43,7 +43,7 @@ namespace VikingAdventure.Core.SkillSystem
     // on RarityLoot.
     public static class SmithingSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.smithing";
+        public const string Identifier = "com.ThunderFury.core.skill.smithing";
 
         public static global::Skills.SkillType Type { get; private set; }
 

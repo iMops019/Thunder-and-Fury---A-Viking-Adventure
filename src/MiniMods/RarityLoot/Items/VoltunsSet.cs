@@ -3,10 +3,10 @@ using System.Globalization;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using VikingAdventure.RarityLoot.Affixes;
-using VikingAdventure.RarityLoot.Patches;
+using ThunderFury.RarityLoot.Affixes;
+using ThunderFury.RarityLoot.Patches;
 
-namespace VikingAdventure.RarityLoot.Items
+namespace ThunderFury.RarityLoot.Items
 {
     // ---- Voltun's Set (Hatchet + Pickaxe) ----
     //

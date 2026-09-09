@@ -2,7 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Managers;
 using UnityEngine;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Building ----
     //
@@ -45,7 +45,7 @@ namespace VikingAdventure.Core.SkillSystem
     // data.
     public static class BuildingSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.building";
+        public const string Identifier = "com.ThunderFury.core.skill.building";
 
         public static global::Skills.SkillType Type { get; private set; }
 

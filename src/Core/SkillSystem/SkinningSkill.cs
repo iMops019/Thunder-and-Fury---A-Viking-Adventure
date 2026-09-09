@@ -1,7 +1,7 @@
 using Jotunn.Configs;
 using Jotunn.Managers;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Skinning ----
     //
@@ -24,7 +24,7 @@ namespace VikingAdventure.Core.SkillSystem
     // Patches/SkinningPatches.cs for the carcass mechanic itself.
     public static class SkinningSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.skinning";
+        public const string Identifier = "com.ThunderFury.core.skill.skinning";
 
         // The prefab name RarityLoot's SkinningKnife.cs registers its
         // item under. Not used for tool-gating anymore (Patches/

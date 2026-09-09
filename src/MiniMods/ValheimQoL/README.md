@@ -44,4 +44,4 @@ Same as every other project in this solution — see the repo root
 ## Config
 All numeric tweaks (weight multiplier, stack size multiplier, stamina
 multipliers, snap tolerance) are exposed via BepInEx's config system —
-adjustable in `BepInEx/config/com.vikingadventure.qol.cfg` without recompiling.
+adjustable in `BepInEx/config/com.thunderfury.qol.cfg` without recompiling.

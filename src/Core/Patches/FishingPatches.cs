@@ -1,8 +1,8 @@
 using HarmonyLib;
 using UnityEngine;
-using VikingAdventure.Core.SkillSystem;
+using ThunderFury.Core.SkillSystem;
 
-namespace VikingAdventure.Core.Patches
+namespace ThunderFury.Core.Patches
 {
     // ---- Fishing gameplay effect: bite chance ----
     //

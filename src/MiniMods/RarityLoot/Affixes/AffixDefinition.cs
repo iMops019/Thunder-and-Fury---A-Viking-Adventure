@@ -1,6 +1,6 @@
 using System;
 
-namespace VikingAdventure.RarityLoot.Affixes
+namespace ThunderFury.RarityLoot.Affixes
 {
     // Which item types an affix is eligible to roll on. Armor-only affixes
     // won't show up on a weapon and vice versa; Any can roll on anything.

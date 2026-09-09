@@ -2,7 +2,7 @@ using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Managers;
 
-namespace VikingAdventure.Core.SkillSystem
+namespace ThunderFury.Core.SkillSystem
 {
     // ---- Fletching ----
     //
@@ -35,7 +35,7 @@ namespace VikingAdventure.Core.SkillSystem
     // still goes to Smithing untouched.
     public static class FletchingSkill
     {
-        public const string Identifier = "com.vikingadventure.core.skill.fletching";
+        public const string Identifier = "com.ThunderFury.core.skill.fletching";
 
         public static global::Skills.SkillType Type { get; private set; }
 

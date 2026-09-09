@@ -1,9 +1,9 @@
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
-using VikingAdventure.Core.SkillSystem;
+using ThunderFury.Core.SkillSystem;
 
-namespace VikingAdventure.RarityLoot.Items
+namespace ThunderFury.RarityLoot.Items
 {
     // ---- Skinning Knife ----
     //

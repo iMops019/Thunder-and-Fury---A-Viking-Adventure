@@ -8,7 +8,7 @@ namespace ValheimQoL
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class ValheimQoLPlugin : BaseUnityPlugin
     {
-        public const string PluginGUID = "com.vikingadventure.qol";
+        public const string PluginGUID = "com.ThunderFury.qol";
         public const string PluginName = "ValheimQoL";
         public const string PluginVersion = "0.1.0";
 

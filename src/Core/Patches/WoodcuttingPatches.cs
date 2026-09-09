@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
-using VikingAdventure.Core.SkillSystem;
+using ThunderFury.Core.SkillSystem;
 
-namespace VikingAdventure.Core.Patches
+namespace ThunderFury.Core.Patches
 {
     // ---- Woodcutting gameplay effects ----
     //

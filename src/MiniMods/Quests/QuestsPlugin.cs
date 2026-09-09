@@ -1,8 +1,8 @@
 using BepInEx;
 using Jotunn.Utils;
-using VikingAdventure.Core;
+using ThunderFury.Core;
 
-namespace VikingAdventure.Quests
+namespace ThunderFury.Quests
 {
     // Objective-based quest system + quest giver NPC(s). See
     // docs/DESIGN.md#quests-mini-mod for the open design questions
@@ -14,8 +14,8 @@ namespace VikingAdventure.Quests
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.Minor)]
     public class QuestsPlugin : BaseUnityPlugin
     {
-        public const string PluginGUID = "com.vikingadventure.quests";
-        public const string PluginName = "VikingAdventure.Quests";
+        public const string PluginGUID = "com.ThunderFury.quests";
+        public const string PluginName = "ThunderFury.Quests";
         public const string PluginVersion = "0.1.0";
 
         private void Awake()
