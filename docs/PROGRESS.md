@@ -77,11 +77,15 @@ and levels is ours, with our own XP curves and level-gated effects.
       two different vanilla components depending on rock type —
       `MineRock5.RPC_Damage` (newer, multi-hit-area rocks) and
       `MineRock.RPC_Hit` (older, single-area) — both patched to cover
-      every ore node. **No milestone** — unlike Woodcutting's level-15
-      bonus, vision.md never designed a concrete Mining milestone, so
-      nothing was invented; just the shared "level → speed + damage to
-      ore/trees" gathering mechanic vision.md explicitly names for both
-      skills. Compiles clean. **Not yet tested in-game.**
+      every ore node. **Shares Woodcutting's level-15 milestone** (2x XP
+      + 25% bonus yield, user's call — same shape, applied to ore instead
+      of logs). Detecting "this hit just destroyed the node" (rather than
+      just damaged it) needed a different check per rock type since
+      neither method's return value distinguishes the two: `MineRock5`
+      tracks each hit area's health as a plain field, re-checked in a
+      Postfix on `DamageArea`; `MineRock` (the older single-area variant)
+      tracks health in the ZDO instead, re-read the same way after
+      `RPC_Hit`. Compiles clean. **Not yet tested in-game.**
 - [ ] **Skill list** — *(designed, first pass; Woodcutting + Mining now
       built)*. Gathering: Mining (built), Woodcutting (built), Fishing,
       Skinning. Production: Smithing, Cooking, Fletching, Building,

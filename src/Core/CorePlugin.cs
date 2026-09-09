@@ -33,6 +33,9 @@ namespace VikingAdventure.Core
 
         public static ConfigEntry<float> MiningDamagePerLevel;
         public static ConfigEntry<float> MiningStaminaEfficiencyWeight;
+        public static ConfigEntry<int> MiningMilestoneLevel;
+        public static ConfigEntry<float> MiningMilestoneXpMultiplier;
+        public static ConfigEntry<float> MiningMilestoneOreYieldBonusPercent;
 
         private void Awake()
         {
@@ -75,6 +78,18 @@ namespace VikingAdventure.Core
             MiningStaminaEfficiencyWeight = Config.Bind(
                 "Mining", "StaminaEfficiencyWeight", 0.33f,
                 "How much Mining level reduces pickaxe stamina cost, at level 100 (max skill). Same mechanic and reasoning as Woodcutting's stand-in for \"speed\" -- see WoodcuttingPatches.cs.");
+
+            MiningMilestoneLevel = Config.Bind(
+                "Mining", "MilestoneLevel", 15,
+                "Mining level that unlocks the milestone bonus -- shares Woodcutting's milestone level and shape (double XP + bonus yield), applied to ore instead of logs.");
+
+            MiningMilestoneXpMultiplier = Config.Bind(
+                "Mining", "MilestoneXpMultiplier", 2f,
+                "Mining XP multiplier once the milestone level is reached. 2.0 = double XP.");
+
+            MiningMilestoneOreYieldBonusPercent = Config.Bind(
+                "Mining", "MilestoneOreYieldBonusPercent", 25f,
+                "Extra ore/stone dropped per destroyed rock node once the milestone level is reached, as a percentage. 25 = +25% more.");
         }
 
         private void OnDestroy()

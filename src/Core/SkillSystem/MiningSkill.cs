@@ -13,13 +13,12 @@ namespace VikingAdventure.Core.SkillSystem
     // both process hits via the same HitData struct every other damage
     // patch in this mod already scales (see Patches/MiningPatches.cs).
     //
-    // No milestone here, unlike Woodcutting's level-15 bonus --
-    // docs/valheim-mod-vision.md only designed a concrete milestone for
-    // Woodcutting ("First concrete milestone: Woodcutting level 15 ...").
-    // Nothing's been decided for Mining's milestone yet, so nothing's
-    // invented here; just the shared gathering mechanic vision.md
-    // explicitly says both skills use ("level -> speed + damage to
-    // ore/trees").
+    // Shares Woodcutting's level-15 milestone (2x XP + bonus yield),
+    // by direction -- vision.md itself only ever spelled out the
+    // milestone for Woodcutting, but Mining and Woodcutting are the same
+    // designed mechanic applied to different node types, so the same
+    // milestone level/shape carries over. See Patches/MiningPatches.cs
+    // for the ore-yield half.
     public static class MiningSkill
     {
         public const string Identifier = "com.vikingadventure.core.skill.mining";
@@ -37,7 +36,17 @@ namespace VikingAdventure.Core.SkillSystem
             };
 
             Type = SkillManager.Instance.AddSkill(config);
-            SkillXpRedirect.Register(global::Skills.SkillType.Pickaxes, Type);
+            SkillXpRedirect.Register(global::Skills.SkillType.Pickaxes, Type, AdjustXp);
+        }
+
+        static float AdjustXp(Player player, float baseValue)
+        {
+            float level = player.GetSkills().GetSkillLevel(Type);
+            if (level >= CorePlugin.MiningMilestoneLevel.Value)
+            {
+                return baseValue * CorePlugin.MiningMilestoneXpMultiplier.Value;
+            }
+            return baseValue;
         }
     }
 }
