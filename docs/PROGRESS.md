@@ -99,11 +99,31 @@ scratch, tied into the skill system for level-gated crafting.
       Magic/Rare/Legendary names, and what a rarity roll actually grants,
       isn't decided. `RarityLootPlugin.cs` is currently a stub that only
       logs on load.
-- [ ] **Stone Pickaxe** — *(designed, not built)*. First planned item —
-      a tier below the Antler Pickaxe, craftable early, no boss-material
-      requirement, can mine copper just slower/weaker.
-- [ ] **Skinning Knife** — *(designed, not built)*. Second planned item —
-      required to harvest carcasses under the new Skinning mechanic.
+- [ ] **Stone Pickaxe** ([StonePickaxe.cs](../src/MiniMods/RarityLoot/Items/StonePickaxe.cs)) —
+      *(implemented, not yet runtime-tested)*. Jotunn `CustomItem` clones
+      the real vanilla `PickaxeAntler` prefab wholesale (model,
+      animations, tool tier — still able to mine copper — all inherited
+      as-is), then only mining damage is scaled down, by a config
+      multiplier (0.6x default) applied to whatever the real cloned
+      Antler value turns out to be at runtime rather than a hardcoded
+      guess. Recipe (5 Wood + 10 Stone at a Workbench, both config
+      amounts) is new content we're choosing, not something extracted
+      from vanilla, so no verification question there. **Two strings
+      weren't independently verified against this install's binary asset
+      data the way the C# hook points elsewhere were** — `"PickaxeAntler"`
+      as the base prefab and `"Wood"`/`"Stone"` as requirement item ids
+      are standard, well-established Jotunn/Valheim internal names, but
+      item/prefab data lives in Unity asset bundles, not the decompiled
+      C# assembly, so there was nothing local to grep them out of. Safe
+      failure mode if wrong: Jotunn logs a clear "could not resolve
+      reference" error on load rather than failing silently. Compiles
+      clean. **Not yet tested in-game — first thing to check Friday.**
+- [ ] **Skinning Knife** — *(designed, not built — intentionally
+      deferred)*. Required to harvest carcasses under the new Skinning
+      mechanic, but that mechanic is Core/Pillar 1 territory and Core is
+      still just a stub — building the knife item alone right now would
+      just be a prop with nothing to do. Pairs with Core's Skinning work
+      when that starts, not before.
 - [ ] **Named-hero gear pattern** — *(designed as a template)*. Hand-
       crafted unique items that stack multiple bonus effects at once
       (e.g. Voltun's Hatchet: +50% log yield, extra tree damage, faster
