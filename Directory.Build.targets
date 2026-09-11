@@ -1,0 +1,39 @@
+<Project>
+
+  <!--
+    Auto-deploy: after every build, copy this project's own output
+    (DLL + PDB) into the local BepInEx plugins folder, so testing in-game
+    is just "build, then launch", no manual copy step (this used to be
+    a documented gap in README.md's "Deploying a build for local
+    testing" section, closed 2026-09-10).
+
+    Prefers BEPINEX_PATH (the Thunderstore Mod Manager / r2modman profile
+    path, the recommended install per README.md, and what this machine's
+    env var already points at) and falls back to VALHEIM_INSTALL\BepInEx
+    (a direct-into-Steam-folder install) if that's not set. Silently
+    skipped if neither is set, so a clean checkout without either env var
+    configured still builds fine, just without the deploy step.
+
+    Each project already builds ProjectReferences with Private=false
+    (see e.g. Core.csproj's own comment on why), so TargetDir only ever
+    contains this project's own DLL, not its dependencies'; exactly right
+    here, since every dependency (Core, Jotunn, RarityLoot for Quests) is
+    separately deployed to its own plugin folder by this same target and
+    BepInEx resolves them all at runtime once loaded.
+  -->
+  <PropertyGroup>
+    <_BepInExRoot Condition="'$(BEPINEX_PATH)' != ''">$(BEPINEX_PATH)</_BepInExRoot>
+    <_BepInExRoot Condition="'$(_BepInExRoot)' == '' AND '$(VALHEIM_INSTALL)' != ''">$(VALHEIM_INSTALL)\BepInEx</_BepInExRoot>
+  </PropertyGroup>
+
+  <Target Name="DeployToBepInEx" AfterTargets="Build" Condition="'$(_BepInExRoot)' != ''">
+    <ItemGroup>
+      <_DeployFiles Include="$(TargetDir)$(AssemblyName).dll" />
+      <_DeployFiles Include="$(TargetDir)$(AssemblyName).pdb" Condition="Exists('$(TargetDir)$(AssemblyName).pdb')" />
+    </ItemGroup>
+    <MakeDir Directories="$(_BepInExRoot)\plugins\$(AssemblyName)" Condition="!Exists('$(_BepInExRoot)\plugins\$(AssemblyName)')" />
+    <Copy SourceFiles="@(_DeployFiles)" DestinationFolder="$(_BepInExRoot)\plugins\$(AssemblyName)" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Deployed $(AssemblyName) to $(_BepInExRoot)\plugins\$(AssemblyName)" />
+  </Target>
+
+</Project>

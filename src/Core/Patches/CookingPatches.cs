@@ -48,7 +48,12 @@ namespace ThunderFury.Core.Patches
             if (skillFactor <= 0f) return;
             if (Random.value >= skillFactor * CorePlugin.CookingBurnPreventionChanceAtMaxLevel.Value) return;
 
-            __instance.GetSlot(slot, out string currentItemName, out _, out _);
+            // GetSlot gained a 5th "cheated" out-param in a post-1.0 patch
+            // (confirmed 2026-09-10, re-verified against a freshly
+            // regenerated publicized assembly after the game updated
+            // mid-session) -- not something this patch needs, just has
+            // to be supplied.
+            __instance.GetSlot(slot, out string currentItemName, out _, out _, out _);
             CookingStation.ItemConversion conversion = __instance.GetItemConversion(currentItemName);
             if (conversion == null || conversion.m_to == null) return;
 

@@ -123,7 +123,14 @@ namespace ThunderFury.Core.Patches
         {
             if (!OreYieldBoost.MeetsMilestone(hit, out Vector3 attackerPos)) return;
 
-            float health = __instance.m_nview.GetZDO().GetFloat("Health" + hitAreaIndex, __instance.GetHealth());
+            // MineRock.m_nview is private on the real assembly (confirmed
+            // via decompile 2026-09-10, found proactively while chasing
+            // the same class of bug elsewhere -- not yet hit live, but
+            // would throw FieldAccessException the first time a player
+            // mines past the milestone level). GetComponent<ZNetView>()
+            // is the same real object via a public Unity API instead.
+            ZNetView nview = __instance.GetComponent<ZNetView>();
+            float health = nview.GetZDO().GetFloat("Health" + hitAreaIndex, __instance.GetHealth());
             if (health > 0f) return;
 
             OreYieldBoost.SpawnBonus(__instance.m_dropItems, attackerPos);

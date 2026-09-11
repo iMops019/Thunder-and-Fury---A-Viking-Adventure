@@ -64,10 +64,18 @@ namespace ValheimQoL.Patches
                 var inv = container.GetInventory();
                 if (inv == null) continue;
 
-                foreach (var item in inv.m_inventory)
+                // Inventory.m_inventory and Humanoid.m_inventory are both
+                // non-public on the real assembly (private / protected
+                // respectively) -- compiled fine against the local
+                // publicized reference but threw FieldAccessException at
+                // runtime (confirmed in-game 2026-09-10). GetAllItems()/
+                // GetInventory() are the real public accessors, and
+                // GetAllItems() returns the SAME live list (confirmed via
+                // decompile), so this still mutates the real inventories.
+                foreach (var item in inv.GetAllItems())
                 {
                     if (s_borrowed.ContainsKey(item)) continue;
-                    player.m_inventory.m_inventory.Add(item);
+                    player.GetInventory().GetAllItems().Add(item);
                     s_borrowed[item] = inv;
                 }
             }
@@ -79,14 +87,15 @@ namespace ValheimQoL.Patches
             {
                 var item = kv.Key;
                 var originInventory = kv.Value;
-                if (player.m_inventory.m_inventory.Contains(item))
+                var playerItems = player.GetInventory().GetAllItems();
+                if (playerItems.Contains(item))
                 {
-                    player.m_inventory.m_inventory.Remove(item);
+                    playerItems.Remove(item);
                 }
                 else
                 {
-                    originInventory.m_inventory.Remove(item);
-                    originInventory.Changed();
+                    originInventory.GetAllItems().Remove(item);
+                    originInventory.m_onChanged?.Invoke();
                 }
             }
             s_borrowed.Clear();

@@ -83,6 +83,29 @@ template and the package's own `build/*.props`:
   `CraftFromContainers`) turned out to need a Transpiler, contrary to
   their pre-decompile guesses — worth checking the real code before
   assuming something needs one.
+- **"Publicized" can go stale relative to what's actually public,
+  confirmed the hard way (2026-09-10/11).** A same-day post-1.0 hotfix
+  made several fields private on the real game assembly
+  (`Character.m_nview`, `InventoryGui.m_dragItem`/`m_craftRecipe`,
+  `CharacterDrop.m_dropsEnabled`, `MineRock.m_nview`) that were public
+  when this project's code was first written against them. The local
+  `assembly_valheim_publicized.dll` still showed all of them as public —
+  publicizing just force-exposes whatever the real assembly's own
+  declared accessibility is at generation time, and doesn't get
+  re-checked on every build. Net effect: code using a direct field access
+  (`obj.m_someField`) **compiled clean** against the stale publicized
+  copy but threw `FieldAccessException` at runtime against the real,
+  now-private field — a silent, confidently-wrong signal from the build
+  succeeding. Two takeaways: (1) decompile the REAL
+  `assembly_valheim.dll`, not the `_publicized` copy, when checking
+  whether a field/method is *actually* public right now — the publicized
+  copy answers "was it public when this was generated," not "is it
+  public now." (2) For a field that turns out to be private with no
+  public accessor, Harmony's `Traverse.Create(obj).Field<T>("name").Value`
+  is the sanctioned way to read/write it anyway — reflection-based access
+  isn't subject to the same compile-time accessibility check a direct
+  `obj.m_field` reference is, so it works regardless of which assembly
+  you compiled against.
 
 ## Mod split (as scaffolded)
 
@@ -90,7 +113,12 @@ template and the package's own `build/*.props`:
 Core             Skill framework, shared UI theme, shared keybinds, shared
                  modifier registry. Everything else depends on this.
 RarityLoot       Magic/Rare/Legendary item tiers + visuals. Depends on Core.
-Quests           Objective-based quest system + quest giver NPC(s). Depends on Core.
+Quests           Objective-based quest system via a buildable Adventure
+                 Board (not an NPC). Depends on Core AND RarityLoot (first
+                 cross-mini-mod dependency in this codebase).
+DevTool          In-game content editor overlay (Jotunn GUIManager-based) —
+                 items, recipes, skills, world/area tuning, live Config
+                 values. Depends on Core.
 ValheimQoL       Standalone QoL layer (weight/stack/stamina/etc). No Core
                  or Jotunn runtime dependency — ships/updates independently.
 ExampleMiniMod   Template — copy to start a new Core-dependent mini-mod.
@@ -120,11 +148,12 @@ breaks one system's game hook doesn't take the others down with it.
       scope and caveats — several skills deliberately ship with "nothing
       designed beyond the name" (Fletching, Building, Crafting) rather
       than inventing gameplay effects vision.md never specified.
-- [ ] Rarity tiers + what a rarity roll grants for *ordinary* vanilla
-      gear — see vision.md open questions. (The rolled-affix mechanism
-      itself is built and already used by Voltun's Set; what's still
-      undesigned is which vanilla items are eligible to roll Magic/Rare
-      and at what odds.)
-- [ ] Quest list + quest giver placement + reward structure — see vision.md
+- [x] Rarity tiers + what a rarity roll grants for *ordinary* vanilla
+      gear — designed and implemented 2026-09-10 (see PROGRESS.md): any
+      weapon/armor-slot item is eligible, config-tunable odds for
+      Magic/Rare, Legendary stays named-only.
+- [x] Quest list + reward structure — designed and implemented
+      2026-09-10 (see PROGRESS.md): a buildable Adventure Board (not an
+      NPC) starting a 3-quest chain, gated by biome.
 - [ ] Weight slider range/defaults — ValheimQoL has working defaults
       (0.5x material weight, 2x stack size) already, tune later

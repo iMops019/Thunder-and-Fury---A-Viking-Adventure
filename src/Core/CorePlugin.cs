@@ -3,8 +3,10 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Managers;
 using Jotunn.Utils;
+using UnityEngine;
 using ThunderFury.Core.Patches;
 using ThunderFury.Core.SkillSystem;
+using ThunderFury.Core.UI;
 
 namespace ThunderFury.Core
 {
@@ -38,8 +40,7 @@ namespace ThunderFury.Core
 
         public static ConfigEntry<float> FishingBiteChanceBonusAtMaxLevel;
 
-        public static ConfigEntry<float> SkinningCarcassVisualRotationX;
-        public static ConfigEntry<float> SkinningCarcassVisualScale;
+        public static ConfigEntry<float> SkinningChannelDuration;
 
         public static ConfigEntry<float> CookingBurnPreventionChanceAtMaxLevel;
         public static ConfigEntry<float> CookingBurnPreventionRadius;
@@ -48,11 +49,24 @@ namespace ThunderFury.Core
         public static ConfigEntry<float> DefenseDamageReductionPerLevel;
         public static ConfigEntry<float> DefenseMinDamageMultiplier;
 
+        public static ConfigEntry<KeyboardShortcut> CharacterSheetToggleKey;
+
+        // ---- Chain Lightning (generic weapon special effect) ----
+        // Built for the "Lightning Sword" idea (2026-09-10) but usable by
+        // any weapon -- see Combat/WeaponSpecialEffectPatch.cs. User's own
+        // framing: "not OP but fun," so these default modest.
+        public static ConfigEntry<float> ChainLightningChance;
+        public static ConfigEntry<int> ChainLightningMaxJumps;
+        public static ConfigEntry<float> ChainLightningRange;
+        public static ConfigEntry<float> ChainLightningDamagePerJump;
+
         private void Awake()
         {
             BindConfig();
 
             _harmony.PatchAll();
+
+            GUIManager.OnCustomGUIAvailable += CharacterSheetPanel.OnCustomGUIAvailable;
 
             PrefabManager.OnVanillaPrefabsAvailable += WoodcuttingSkill.Register;
             PrefabManager.OnVanillaPrefabsAvailable += MiningSkill.Register;
@@ -109,13 +123,9 @@ namespace ThunderFury.Core
                 "Fishing", "BiteChanceBonusAtMaxLevel", 0.5f,
                 "Relative increase to a fish's chance to bite your line, at level 100 (max skill). 0.5 = +50% relative bite chance at level 100, scaling smoothly from 0 at level 0.");
 
-            SkinningCarcassVisualRotationX = Config.Bind(
-                "Skinning", "CarcassVisualRotationX", 90f,
-                "X-axis rotation (degrees) applied to a carcass piece's reused creature mesh. Needs live tuning once actually seen in-game -- the mesh renders in its rigged bind pose, not a real death pose, so this is a best-guess starting point for making it read as 'lying down' rather than 'standing.'");
-
-            SkinningCarcassVisualScale = Config.Bind(
-                "Skinning", "CarcassVisualScale", 1f,
-                "Uniform scale applied to a carcass piece's reused creature mesh. Needs live tuning once actually seen in-game.");
+            SkinningChannelDuration = Config.Bind(
+                "Skinning", "ChannelDurationSeconds", 2.5f,
+                "How long you must hold [E] on a carcass before it gives up its hide/meat. Pure flavor (user's own framing, 2026-09-10) -- not a difficulty gate.");
 
             CookingBurnPreventionChanceAtMaxLevel = Config.Bind(
                 "Cooking", "BurnPreventionChanceAtMaxLevel", 0.75f,
@@ -136,6 +146,43 @@ namespace ThunderFury.Core
             DefenseMinDamageMultiplier = Config.Bind(
                 "Defense", "MinDamageMultiplier", 0.1f,
                 "Floor on the damage multiplier DefenseDamageReductionPerLevel can reach, so high Defense can't be tuned into literal invincibility. 0.1 = incoming damage can never be reduced below 10% of its original value.");
+
+            ChainLightningChance = Config.Bind(
+                "ChainLightning", "TriggerChance", 0.2f,
+                "Chance per hit for a weapon with the Chain Lightning special effect to trigger it. 0.2 = 20%.");
+
+            ChainLightningMaxJumps = Config.Bind(
+                "ChainLightning", "MaxJumps", 3,
+                "Maximum number of additional targets a triggered Chain Lightning can jump to.");
+
+            ChainLightningRange = Config.Bind(
+                "ChainLightning", "JumpRange", 8f,
+                "Range (meters) Chain Lightning searches for the next target from the last one hit.");
+
+            ChainLightningDamagePerJump = Config.Bind(
+                "ChainLightning", "DamagePerJump", 10f,
+                "Lightning damage dealt to each additional target Chain Lightning jumps to.");
+
+            CharacterSheetToggleKey = Config.Bind(
+                "UI", "CharacterSheetToggleKey", new KeyboardShortcut(KeyCode.C),
+                "Opens/closes the Character Sheet panel (all 12 skills and their levels in one place).");
+        }
+
+        private void Update()
+        {
+            // "C" is a very ordinary character to type into chat --
+            // guard against toggling mid-message. Chat.HasFocus() and
+            // TextInput.IsVisible() are the two real vanilla "a text box
+            // currently has focus" checks (confirmed via decompile;
+            // GUIManager's own internal input-blocking patches
+            // TextInput.IsVisible for the same reason).
+            if (global::Chat.instance != null && global::Chat.instance.HasFocus()) return;
+            if (TextInput.IsVisible()) return;
+
+            if (CharacterSheetToggleKey.Value.IsDown())
+            {
+                CharacterSheetPanel.Toggle();
+            }
         }
 
         private void OnDestroy()

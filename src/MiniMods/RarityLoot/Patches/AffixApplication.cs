@@ -59,7 +59,17 @@ namespace ThunderFury.RarityLoot.Patches
         {
             if (!(__instance is Player player)) return;
 
-            foreach (ItemDrop.ItemData item in player.m_inventory.m_inventory)
+            // Confirmed the hard way in-game (2026-09-10): Humanoid's
+            // m_inventory FIELD compiles fine against the local
+            // publicized reference assembly but throws
+            // FieldAccessException at runtime against the real
+            // (non-publicized) game assembly -- publicization only
+            // extends far enough for some members, not this one.
+            // GetInventory() is Player's own public accessor for the
+            // same object (confirmed via decompile: Player's own code
+            // calls GetInventory().GetAllItems() internally), so it's
+            // the real, always-accessible path.
+            foreach (ItemDrop.ItemData item in player.GetInventory().GetAllItems())
             {
                 if (!item.m_equipped) continue;
                 if (ItemRoller.TryGetAffixValue(item, AffixPool.LifeAffixId, out float bonus))

@@ -22,10 +22,13 @@ namespace ThunderFury.RarityLoot.Items
     // an early, cheap option independent of whatever knife they happen
     // to already own).
     //
-    // Same verification caveat as Stone Pickaxe: "Knife" as the base
-    // prefab and "Wood"/"Flint" as requirement item ids are standard,
-    // well-established Jotunn/Valheim names, not independently verified
-    // against this install's binary asset data.
+    // "Knife" turned out to be wrong post-1.0 -- confirmed live in-game
+    // 2026-09-10 (Jotunn: "can not find base prefab with name: Knife",
+    // this item failing registration entirely). A live ObjectDB dump
+    // confirmed the real name is "KnifeFlint" (1.0 apparently split the
+    // old singular "Knife" into a full tier progression like every other
+    // tool) -- fixed to clone that, which also fits this item's own
+    // Wood+Flint recipe better than a guessed name ever did.
     public static class SkinningKnife
     {
         public static void Register()
@@ -42,7 +45,7 @@ namespace ThunderFury.RarityLoot.Items
                 },
             };
 
-            var knife = new CustomItem(SkinningSkill.SkinningKnifePrefabName, "Knife", config);
+            var knife = new CustomItem(SkinningSkill.SkinningKnifePrefabName, "KnifeFlint", config);
             if (!knife.IsValid())
             {
                 Jotunn.Logger.LogError("SkinningKnife item is not valid, skipping registration");

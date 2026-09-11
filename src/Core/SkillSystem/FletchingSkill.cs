@@ -27,7 +27,11 @@ namespace ThunderFury.Core.SkillSystem
     // mechanism for Fletching would just fight Smithing over the same
     // field. Fixed by intercepting at the one place that DOES know which
     // recipe is actually being crafted: InventoryGui.m_craftRecipe
-    // (confirmed public), checked in a Prefix on Player.RaiseSkill
+    // (was confirmed public at the time; a later hotfix made it private,
+    // confirmed live in-game 2026-09-10 as a FieldAccessException spamming
+    // every gather/raise-skill call -- now read via Harmony's Traverse,
+    // same fix already applied to InventoryGui.m_dragItem elsewhere),
+    // checked in a Prefix on Player.RaiseSkill
     // specifically when the skill about to be raised is Smithing's (i.e.
     // it came from a station-level grant) -- if the recipe being crafted
     // is a Bow or Ammo item, this reclassifies that XP as Fletching
@@ -60,7 +64,9 @@ namespace ThunderFury.Core.SkillSystem
         {
             if (skill != SmithingSkill.Type) return true;
 
-            Recipe recipe = InventoryGui.instance != null ? InventoryGui.instance.m_craftRecipe : null;
+            Recipe recipe = InventoryGui.instance != null
+                ? Traverse.Create(InventoryGui.instance).Field<Recipe>("m_craftRecipe").Value
+                : null;
             ItemDrop item = recipe != null ? recipe.m_item : null;
             if (item == null) return true;
 

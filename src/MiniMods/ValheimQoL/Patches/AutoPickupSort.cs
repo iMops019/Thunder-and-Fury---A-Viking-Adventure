@@ -40,7 +40,7 @@ namespace ValheimQoL.Patches
             if (!InventoryGui.IsVisible()) return;
             if (!ValheimQoLPlugin.SortInventoryKey.Value.IsDown()) return;
 
-            InventorySorter.Sort(__instance.m_inventory);
+            InventorySorter.Sort(__instance.GetInventory());
         }
     }
 
@@ -50,26 +50,36 @@ namespace ValheimQoL.Patches
         {
             MergeStacks(inventory);
 
-            var items = inventory.m_inventory
+            // Inventory.m_inventory (the raw list) and Inventory.Changed()
+            // are both private on the real assembly -- compiled fine
+            // against the local publicized reference but threw at
+            // runtime (confirmed in-game 2026-09-10). GetAllItems()
+            // returns the SAME live list (confirmed via decompile: it's
+            // a plain `return m_inventory;`), so mutating its contents
+            // still mutates the real inventory. m_onChanged is the real
+            // public hook Changed() itself invokes internally to notify
+            // the UI -- calling it directly gets the same refresh without
+            // needing the private method.
+            var items = inventory.GetAllItems()
                 .OrderBy(i => (int)i.m_shared.m_itemType)
                 .ThenBy(i => i.m_shared.m_name)
                 .ThenByDescending(i => i.m_quality)
                 .ToList();
 
-            int width = inventory.m_width;
+            int width = inventory.GetWidth();
             for (int idx = 0; idx < items.Count; idx++)
             {
                 items[idx].m_gridPos = new Vector2i(idx % width, idx / width);
             }
 
-            inventory.Changed();
+            inventory.m_onChanged?.Invoke();
         }
 
         // Same-name/quality/worldLevel stacks get combined into as few
         // slots as possible, up to each item's own max stack size.
         static void MergeStacks(Inventory inventory)
         {
-            var groups = inventory.m_inventory
+            var groups = inventory.GetAllItems()
                 .GroupBy(i => (i.m_shared.m_name, i.m_quality, i.m_worldLevel));
 
             foreach (var group in groups)
@@ -84,7 +94,7 @@ namespace ValheimQoL.Patches
                 {
                     if (remaining <= 0)
                     {
-                        inventory.m_inventory.Remove(itemData);
+                        inventory.GetAllItems().Remove(itemData);
                         continue;
                     }
 

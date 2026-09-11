@@ -61,15 +61,28 @@ namespace ThunderFury.Core.Patches
     // already-filtered drop list, so this works whether or not the
     // ragdoll ends up disabling CharacterDrop.
     //
-    // Verification caveat, same shape as StonePickaxe's: "MushroomYellow"
-    // as the cloned base prefab and the animal drop-item ids below are
-    // standard, well-established Jotunn/Valheim names, not independently
-    // confirmed against this install's binary asset data (which lives in
-    // Unity asset bundles, not the decompiled C# assembly). Confidence is
-    // lower for Wolf's meat drop and treating Neck's signature item
-    // (NeckTail) as its "hide" slot -- flagged explicitly on those calls
-    // below. Safe failure mode if any name is wrong: Jotunn logs a clear
-    // error on load for that one animal, nothing else is affected.
+    // Base prefab history, all found live in-game 2026-09-10: the
+    // original "MushroomYellow" guess didn't exist at all post-1.0
+    // ("has no Pickable component," breaking carcass registration
+    // outright) -- fixed via a live ZNetScene dump to "Pickable_Mushroom_
+    // yellow" (vanilla world-pickups use a "Pickable_" prefix the
+    // original guess missed). That got carcasses registering, but the
+    // follow-up attempt to graft the actual animal's own mesh onto that
+    // mushroom clone (copying a SkinnedMeshRenderer's sharedMesh onto a
+    // plain MeshRenderer) rendered as fully invisible in-game -- not
+    // provably diagnosable further without live Unity asset/shader
+    // inspection this codebase has no way to do. Simplified instead to
+    // clone "Pickable_MeatPile" directly -- a real, already-working
+    // vanilla pickup visual (confirmed to exist and render correctly by
+    // construction, since it's not custom-assembled) -- and dropped the
+    // mesh-grafting code entirely. Trade-off accepted deliberately: every
+    // carcass now looks like a generic meat pile rather than the
+    // specific animal, in exchange for something that reliably renders.
+    // Confidence is still lower for Wolf's meat drop and treating Neck's
+    // signature item (NeckTail) as its "hide" slot -- flagged explicitly
+    // on those calls below. Safe failure mode if either of those item ids
+    // is wrong: Jotunn logs a clear error on load for that one animal,
+    // nothing else is affected.
     public static class SkinningSystem
     {
         public class AnimalEntry
@@ -155,63 +168,8 @@ namespace ThunderFury.Core.Patches
             pickable.m_respawnTimeMinutes = 0f;
             pickable.m_pickRaiseSkill = SkinningSkill.Type;
 
-            ApplyCreatureVisual(carcass, creaturePrefabName);
-
             PrefabManager.Instance.AddPrefab(carcass);
             return carcass;
-        }
-
-        // Reuses the actual animal's own mesh instead of the cloned base
-        // prefab's placeholder visual (a mushroom, structurally cloned
-        // for its Pickable/collider/ZNetView, nothing to do with what it
-        // looks like). Confirmed against the real 1.0 decompile:
-        // Character.m_visual (the field vanilla itself uses for the
-        // living model, e.g. ground-tilt rotation) is only populated at
-        // runtime by Awake, so it's not usable on an uninstantiated
-        // prefab asset -- but GetComponentInChildren<SkinnedMeshRenderer>
-        // walks the prefab's actual authored hierarchy directly and works
-        // fine without instantiating anything.
-        //
-        // SkinnedMeshRenderer.sharedMesh is the base bind-pose geometry
-        // (before bone deformation) -- a completely valid mesh to render
-        // statically via a plain MeshFilter/MeshRenderer, just frozen in
-        // whatever pose the model was authored/rigged in rather than a
-        // true "collapsed dead body" ragdoll pose (that pose only exists
-        // after per-instance physics settles, not as reusable prefab
-        // data). A reasonable, safe first approximation, not a perfect
-        // one -- rotation and scale are config values specifically
-        // because they'll need live tuning once this is actually seen
-        // in-game, not something to get right blind.
-        //
-        // Non-destructive by design: disables the base prefab's own
-        // renderers rather than removing any child GameObjects, so
-        // there's no risk of deleting something structurally important
-        // (the collider/ZNetView host) that this code doesn't have full
-        // visibility into.
-        static void ApplyCreatureVisual(GameObject carcassPiece, string creaturePrefabName)
-        {
-            GameObject creaturePrefab = PrefabManager.Instance.GetPrefab(creaturePrefabName);
-            SkinnedMeshRenderer source = creaturePrefab != null ? creaturePrefab.GetComponentInChildren<SkinnedMeshRenderer>(true) : null;
-            if (source == null || source.sharedMesh == null)
-            {
-                Jotunn.Logger.LogWarning($"Skinning: no mesh found on '{creaturePrefabName}' for its carcass visual, keeping the placeholder");
-                return;
-            }
-
-            foreach (Renderer r in carcassPiece.GetComponentsInChildren<Renderer>(true))
-            {
-                r.enabled = false;
-            }
-
-            GameObject visual = new GameObject("CreatureVisual");
-            visual.transform.SetParent(carcassPiece.transform, false);
-            visual.transform.localRotation = Quaternion.Euler(CorePlugin.SkinningCarcassVisualRotationX.Value, 0f, 0f);
-            visual.transform.localScale = Vector3.one * CorePlugin.SkinningCarcassVisualScale.Value;
-
-            MeshFilter filter = visual.AddComponent<MeshFilter>();
-            filter.sharedMesh = source.sharedMesh;
-            MeshRenderer meshRenderer = visual.AddComponent<MeshRenderer>();
-            meshRenderer.sharedMaterials = source.sharedMaterials;
         }
 
         public static bool TryGetAnimal(string creaturePrefabName, out AnimalEntry entry)
@@ -248,11 +206,11 @@ namespace ThunderFury.Core.Patches
         // with the same certainty as the other two.
         public static void RegisterDefaults()
         {
-            RegisterAnimal("Deer", "MushroomYellow", "DeerHide", 1, "RawMeat", 2);
+            RegisterAnimal("Deer", "Pickable_MeatPile", "DeerHide", 1, "RawMeat", 2);
 
             // Boar has no distinct hide/pelt item in vanilla as far as
             // this could confirm -- meat only.
-            RegisterAnimal("Boar", "MushroomYellow", null, 0, "RawMeat", 2);
+            RegisterAnimal("Boar", "Pickable_MeatPile", null, 0, "RawMeat", 2);
 
             // WolfPelt is a well-known crafting material (wolf armor
             // recipes). Wolf also dropping generic RawMeat is a lower-
@@ -260,7 +218,7 @@ namespace ThunderFury.Core.Patches
             // item, but this wasn't independently confirmed for Wolf
             // specifically) -- if wrong, only Wolf's meat carcass piece
             // fails to register (logged), the hide piece is unaffected.
-            RegisterAnimal("Wolf", "MushroomYellow", "WolfPelt", 1, "RawMeat", 2);
+            RegisterAnimal("Wolf", "Pickable_MeatPile", "WolfPelt", 1, "RawMeat", 2);
 
             // Neck has no separate meat item as far as this could
             // confirm -- its signature drop, NeckTail, is used here as
@@ -269,7 +227,7 @@ namespace ThunderFury.Core.Patches
             // and the skinning/butchering split is really "which of the
             // two slots does this go in" rather than a strict hide-vs-
             // meat rule.
-            RegisterAnimal("Neck", "MushroomYellow", "NeckTail", 1, null, 0);
+            RegisterAnimal("Neck", "Pickable_MeatPile", "NeckTail", 1, null, 0);
         }
     }
 
@@ -289,9 +247,20 @@ namespace ThunderFury.Core.Patches
             __state = null;
 
             CharacterDrop drop = __instance.GetComponent<CharacterDrop>();
-            if (drop == null || !drop.m_dropsEnabled) return;
+            if (drop == null) return;
 
-            string creatureName = __instance.m_nview != null ? __instance.m_nview.GetPrefabName() : null;
+            // CharacterDrop.m_dropsEnabled is private on the real (non-
+            // publicized) game assembly -- confirmed via decompile
+            // 2026-09-10 while chasing a related m_nview issue below.
+            // Traverse is Harmony's own sanctioned way to read a private
+            // field from outside its declaring type; a direct
+            // `drop.m_dropsEnabled` compiles fine against the publicized
+            // reference assembly but throws FieldAccessException at
+            // runtime against the real one.
+            bool dropsEnabled = Traverse.Create(drop).Field<bool>("m_dropsEnabled").Value;
+            if (!dropsEnabled) return;
+
+            string creatureName = ThunderFury.Core.Utils.PrefabNameHelper.GetPrefabName(__instance);
             if (creatureName == null || !SkinningSystem.TryGetAnimal(creatureName, out SkinningSystem.AnimalEntry entry)) return;
 
             List<CharacterDrop.Drop> removed = drop.m_drops

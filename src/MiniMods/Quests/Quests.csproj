@@ -17,6 +17,21 @@
     <ProjectReference Include="..\..\Core\Core.csproj">
       <Private>false</Private>
     </ProjectReference>
+    <!--
+      First cross-mini-mod reference in this codebase (every other
+      mini-mod only depends on Core). Deliberate: the "Prove Your Legend"
+      quest needs to ask "is this item Legendary," a concept RarityLoot
+      owns (ItemRoller/RarityTier); duplicating that via a magic
+      m_customData string key instead would be more fragile, not less.
+      Matched with a hard BepInDependency attribute in QuestsPlugin so
+      load order is guaranteed; this mod pack is already designed as one
+      cohesive experience (only ValheimQoL is meant to stand fully
+      alone), so this isn't a new coupling in spirit, just the first
+      literal one.
+    -->
+    <ProjectReference Include="..\RarityLoot\RarityLoot.csproj">
+      <Private>false</Private>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

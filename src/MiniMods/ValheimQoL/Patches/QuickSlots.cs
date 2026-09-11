@@ -20,7 +20,10 @@ namespace ValheimQoL.Patches
     //  - InventoryGui.m_dragItem holds whatever item the player currently
     //    has picked up in the inventory screen (set by SetupDragItem, the
     //    same method vanilla's own drag-and-drop uses) — used here as
-    //    "the item to assign" when binding a slot.
+    //    "the item to assign" when binding a slot. Private on the real
+    //    assembly (confirmed via decompile 2026-09-10, after catching it
+    //    live as a FieldAccessException) — read via Harmony's Traverse
+    //    below, not a direct field access.
     //
     // Workflow: in the inventory screen, left-click an item to pick it up
     // (vanilla's own drag state), then press Ctrl+<slot key> to assign it,
@@ -50,7 +53,15 @@ namespace ValheimQoL.Patches
 
                 if (assigning)
                 {
-                    var dragItem = InventoryGui.instance != null ? InventoryGui.instance.m_dragItem : null;
+                    // InventoryGui.m_dragItem is private on the real (non-
+                    // publicized) game assembly -- confirmed via decompile
+                    // 2026-09-10, found live in-game as a FieldAccessException
+                    // spamming every frame. No public getter exists for it,
+                    // so read it via Harmony's own Traverse instead of a
+                    // direct field access.
+                    ItemDrop.ItemData dragItem = InventoryGui.instance != null
+                        ? Traverse.Create(InventoryGui.instance).Field<ItemDrop.ItemData>("m_dragItem").Value
+                        : null;
                     if (dragItem == null) continue;
 
                     __instance.m_customData[dataKey] = dragItem.m_shared.m_name;
@@ -61,10 +72,16 @@ namespace ValheimQoL.Patches
                 if (!__instance.m_customData.TryGetValue(dataKey, out var itemName) || string.IsNullOrEmpty(itemName))
                     continue;
 
-                var item = __instance.m_inventory.GetItem(itemName);
+                // __instance.m_inventory is protected on Humanoid --
+                // compiled fine against the local publicized reference
+                // but threw FieldAccessException at runtime (confirmed
+                // in-game 2026-09-10). GetInventory() is the real public
+                // accessor for the same object.
+                Inventory inventory = __instance.GetInventory();
+                var item = inventory.GetItem(itemName);
                 if (item == null) continue;
 
-                __instance.UseItem(__instance.m_inventory, item, fromInventoryGui: true);
+                __instance.UseItem(inventory, item, fromInventoryGui: true);
             }
         }
     }

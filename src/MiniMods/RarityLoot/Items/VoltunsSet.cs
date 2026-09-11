@@ -36,10 +36,14 @@ namespace ThunderFury.RarityLoot.Items
     // model later doesn't require touching the affix system, just where
     // ItemRollTrigger.Register happens.
     //
-    // Same verification caveat as StonePickaxe: "Hatchet" as the base
-    // weapon prefab and "Wood"/"Copper"/"Bronze" as requirement item ids
-    // are standard, well-established Jotunn/Valheim names, not
-    // independently confirmed against this install's binary asset data.
+    // "Hatchet" turned out to be wrong post-1.0 -- confirmed live in-game
+    // 2026-09-10 (Jotunn: "can not find base prefab with name: Hatchet",
+    // this item failing registration entirely). 1.0 replaced the old
+    // single starting axe with a two-tier Stone Age progression
+    // (AxeStone -> AxeFlint, confirmed via a live ObjectDB dump plus the
+    // player's own inventory tooltip reading "Stone Axe" for their
+    // starting weapon) -- fixed to clone AxeStone, the actual modern
+    // equivalent of the old free starting hatchet.
     public static class VoltunsSet
     {
         public static void Register()
@@ -63,7 +67,7 @@ namespace ThunderFury.RarityLoot.Items
                 },
             };
 
-            var hatchet = new CustomItem("VoltunsHatchet", "Hatchet", config);
+            var hatchet = new CustomItem("VoltunsHatchet", "AxeStone", config);
             if (!hatchet.IsValid())
             {
                 Jotunn.Logger.LogError("VoltunsHatchet item is not valid, skipping registration");

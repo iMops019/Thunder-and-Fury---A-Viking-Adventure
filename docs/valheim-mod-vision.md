@@ -3,7 +3,7 @@
 ## Core Concept
 Turn Valheim's survival-crafting loop into a more RPG-driven experience, OSRS-inspired skilling at the center, built on top of Valheim's existing assets rather than replacing them.
 
-## The Four Pillars
+## The Four Pillars (plus a 5th: the Dev Tool, added 2026-09-10)
 
 ### 1. Skilling System (OSRS-style)
 - Distinct skills, each with its own XP curve and level-gated unlocks
@@ -80,6 +80,12 @@ Turn Valheim's survival-crafting loop into a more RPG-driven experience, OSRS-in
 - **Unique/Named gear tier (locked in):** hand-crafted named items — e.g. "Voltun's Hatchet" — sitting above the normal Stone/Bronze/Iron tier progression, not just higher numbers on the same stats. These stack multiple bonus effects at once (e.g. Voltun's Hatchet: +50% log yield, extra tree damage, faster chop speed, double XP simultaneously) rather than one flat stat bump like a normal tool upgrade gives
 - **Voltun's Set (WIP):** Hatchet + Pickaxe as a 2-piece set tied to a named hero ("Voltun"), findable/completable in the 2nd area (Black Forest). Pickaxe roughly mirrors the Hatchet's bonus profile for now — will be revisited and differentiated later. Acquisition method still undecided: recipe + collected materials, vs. a straight drop chance — TBD
 - **Pattern to repeat:** named-hero gear sets are the template going forward — more made-up Viking hero names, each with their own multi-piece tool/gear set, to be designed later
+- **Second named-hero item, 2026-09-10: the Lightning Sword.** A rare
+  (not craftable) Meadows drop dealing physical + lightning damage with a
+  chance to trigger Chain Lightning (jumps between nearby enemies). First
+  use of a new generic weapon special-effect mechanism (see
+  PROGRESS.md) — any future item, hand-coded or made through the Dev
+  Tool's Item Creator, can opt into the same on-hit proc system.
 
 ### 4. QoL Layer — ACTIVE MODULE (building this first)
 Independent of the other three pillars — good early, fast-win target.
@@ -101,6 +107,24 @@ Build order (simple → complex):
 5. Auto-sort / auto-pickup — inventory logic, moderate complexity
 6. Craft from nearby containers — needs container-scanning logic, most involved of the six
 
+### 5. Dev Tool (in-game content editor)
+- A single in-game overlay panel (hotkey-toggled) for real editing control
+  over the whole mod without a recompile — new items, new recipes
+  (materials list, station, optional skill+level gate), new skills built
+  from already-proven generic mechanics, area/world difficulty tuning, and
+  every mod's Config values, all in one place
+- Built on Jotunn's `GUIManager` (Valheim-style panels/buttons/scroll
+  views), not a separate desktop app or raw hand-rolled UI — same
+  tweak/save/test loop as actually playing
+- **Skill Creator ceiling (locked in):** only composes skills from
+  mechanics Core has already proven generic (XP redirect, station-based
+  crafting XP, tool-gated harvest). A genuinely new mechanic still needs
+  code — the editor doesn't invent new game logic
+- Prioritized ahead of finishing Quests and RarityLoot's ordinary-gear
+  tier list, specifically so those get wired into the overlay as they're
+  built. See [PROGRESS.md](PROGRESS.md#pillar-5-dev-tool-srcminimodsdevtool--new-2026-09-10)
+  for current build status.
+
 ## Technical Foundation
 - BepInEx + Harmony + Jotunn (all pending 1.0 recompiles — see status)
 - C#, single mod solution, modular so pillars can be built/tested independently
@@ -111,19 +135,49 @@ Build order (simple → complex):
   chopping, etc.) into our custom skills instead
 
 ## Status
+*(Last refreshed 2026-09-11. This section is a snapshot summary —
+[PROGRESS.md](PROGRESS.md) is the authoritative, per-feature log of
+what's designed vs. built vs. confirmed working in-game.)*
+
 - Valheim 1.0 released Sept 9, 2026. BepInEx/Jotunn worked against it
-  immediately — no compatibility wait needed in practice.
-- Implementation is well underway: ValheimQoL's full QoL layer, all 12
-  skills from the skill list above (Mining, Woodcutting, Fishing,
-  Skinning, Smithing, Cooking, Fletching, Building, Crafting, Attack,
-  Strength, Defense), and RarityLoot's Stone Pickaxe/Voltun's
-  Set/Skinning Knife are all implemented and compile clean. Nothing has
-  been runtime-tested yet — see [PROGRESS.md](PROGRESS.md) for the
-  authoritative per-feature status (what's designed vs. built vs.
-  confirmed working in-game).
-- Still open: Quests, most of RarityLoot's rarity-tier mechanics for
-  ordinary vanilla gear, and everything in this doc's own Open
-  Questions / Parking Lot below.
+  immediately. One real post-launch gotcha found the hard way: a same-day
+  Iron Gate hotfix made several previously-public fields
+  (`Character.m_nview`, `InventoryGui.m_dragItem`/`m_craftRecipe`,
+  `CharacterDrop.m_dropsEnabled`, `MineRock.m_nview`) private on the real
+  game assembly while the locally-generated "publicized" reference
+  assembly still showed them as public — code that compiled clean threw
+  `FieldAccessException` at runtime. Fixed everywhere it was found, via
+  `GetComponent<T>()` where a public alternative existed or Harmony's
+  `Traverse` otherwise. Also found: the active BepInEx install can live
+  under a mod manager's own profile folder (this project's is under
+  Thunderstore Mod Manager), not the Steam game folder directly — worth
+  checking before assuming a build "isn't loading."
+- Core's full skill system (all 12 skills), ValheimQoL's QoL layer,
+  Quests' 3-quest chain (Adventure Board, not an NPC), and RarityLoot's
+  rarity-tier system for ordinary gear are implemented and confirmed
+  working in-game.
+- **Dev Tool (5th pillar)**: a full in-game content editor (F9), grown
+  from a Values-tab stub into 11 tabs — Item/Piece/Creature/Recipe/Skill/
+  Quest Creators, World/Biome/Dungeon editors, a Spawn tab (instant-give
+  any item, including custom ones, for testing), and the generic Values
+  tab. Confirmed working in-game after several real bugs found and fixed
+  through actual play (wrong base-prefab-name guesses, the field-access
+  issue above, a skinning-channel timing bug).
+- **Legendary loot, all 8 biomes**: 176 hand-placed Legendary
+  weapons/armor (11 each per biome — Meadows, Black Forest, Swamp,
+  Mountain, Plains, Mistlands, Ashlands, Deep North), drop-only, each
+  biome split three ways by creature theme (a "lore-arc" unique creature,
+  an elemental creature matching its own vanilla identity, and a regular
+  melee creature). Every bonus number and drop chance is individually
+  tunable via the Dev Tool's Values tab. Base items and armor pieces are
+  confirmed real via live in-game data dumps; a handful of the newer/
+  rarer creature names (e.g. Deep North's) are best-effort guesses with
+  a safe-failure fallback — see PROGRESS.md for exactly which.
+- A skinning "channel" mechanic (hold [E] ~2.5s, reusing vanilla's own
+  action-progress bar) replaced instant carcass pickup as a flavor pass.
+- Still open: a real Player Level system (see PROGRESS.md's Classes &
+  Passive Trees entry), expanding the quest chain, and this doc's own
+  Open Questions / Parking Lot below.
 
 ## Open Questions (need answers before coding starts)
 - How deep does "custom menus" go — full UI overhaul or additive panels?

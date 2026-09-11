@@ -37,6 +37,15 @@ namespace ThunderFury.RarityLoot
 
         public static ConfigEntry<int> LegendaryAffixCount;
 
+        public static ConfigEntry<float> OrdinaryMagicChance;
+        public static ConfigEntry<float> OrdinaryRareChance;
+        public static ConfigEntry<int> OrdinaryMagicAffixCount;
+        public static ConfigEntry<int> OrdinaryRareAffixCount;
+
+        public static ConfigEntry<float> AmbientDropChance;
+        public static ConfigEntry<float> AmbientLegendaryShare;
+        public static ConfigEntry<float> AmbientRareShare;
+
         public static ConfigEntry<float> VoltunDamageMultiplier;
         public static ConfigEntry<float> VoltunSpeedMultiplier;
         public static ConfigEntry<float> VoltunLogYieldBonusPercent;
@@ -52,15 +61,51 @@ namespace ThunderFury.RarityLoot
 
         public static ConfigEntry<int> SmithingLegendaryCraftLevel;
 
+        public static ConfigEntry<float> LightningSwordBonusDamage;
+        public static ConfigEntry<float> LightningSwordDropChance;
+
         private void Awake()
         {
             BindConfig();
+            LegendaryWeaponsBatch.BindConfig(Config);
+            LegendaryArmorBatch.BindConfig(Config);
+            LegendaryWeaponsBlackForest.BindConfig(Config);
+            LegendaryArmorBlackForest.BindConfig(Config);
+            LegendaryWeaponsSwamp.BindConfig(Config);
+            LegendaryArmorSwamp.BindConfig(Config);
+            LegendaryWeaponsMountain.BindConfig(Config);
+            LegendaryArmorMountain.BindConfig(Config);
+            LegendaryWeaponsPlains.BindConfig(Config);
+            LegendaryArmorPlains.BindConfig(Config);
+            LegendaryWeaponsMistlands.BindConfig(Config);
+            LegendaryArmorMistlands.BindConfig(Config);
+            LegendaryWeaponsAshlands.BindConfig(Config);
+            LegendaryArmorAshlands.BindConfig(Config);
+            LegendaryWeaponsDeepNorth.BindConfig(Config);
+            LegendaryArmorDeepNorth.BindConfig(Config);
 
             _harmony.PatchAll();
 
             PrefabManager.OnVanillaPrefabsAvailable += StonePickaxe.Register;
             PrefabManager.OnVanillaPrefabsAvailable += VoltunsSet.Register;
             PrefabManager.OnVanillaPrefabsAvailable += SkinningKnife.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LightningSword.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsBatch.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorBatch.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsBlackForest.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorBlackForest.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsSwamp.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorSwamp.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsMountain.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorMountain.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsPlains.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorPlains.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsMistlands.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorMistlands.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsAshlands.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorAshlands.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryWeaponsDeepNorth.Register;
+            PrefabManager.OnVanillaPrefabsAvailable += LegendaryArmorDeepNorth.Register;
 
             Jotunn.Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
@@ -80,6 +125,40 @@ namespace ThunderFury.RarityLoot
             LegendaryAffixCount = Config.Bind(
                 "RarityLoot", "LegendaryAffixCount", 2,
                 "How many rolled affixes a Legendary item gets from the shared affix pool, on top of its fixed identity bonuses.");
+
+            OrdinaryRareChance = Config.Bind(
+                "RarityLoot", "OrdinaryRareChance", 0.015f,
+                "Chance for ANY vanilla weapon or armor piece (crafted or looted -- vision.md left this fully open, this is a tunable starting guess, not a locked number) to roll Rare. 0.015 = 1.5%. Checked before Magic so its odds aren't shadowed.");
+
+            OrdinaryMagicChance = Config.Bind(
+                "RarityLoot", "OrdinaryMagicChance", 0.08f,
+                "Chance for any vanilla weapon or armor piece to roll Magic, checked after Rare. 0.08 = 8%.");
+
+            OrdinaryRareAffixCount = Config.Bind(
+                "RarityLoot", "OrdinaryRareAffixCount", 2,
+                "Rolled affixes on an ordinary item that rolled Rare.");
+
+            OrdinaryMagicAffixCount = Config.Bind(
+                "RarityLoot", "OrdinaryMagicAffixCount", 1,
+                "Rolled affixes on an ordinary item that rolled Magic.");
+
+            AmbientDropChance = Config.Bind(
+                "RarityLoot", "AmbientDropChance", 0.03f,
+                "Biome-aware ambient drop system (2026-09-10 redesign): chance PER KILL that anything at all drops from this mechanic. " +
+                "Deliberately separate from OrdinaryRare/MagicChance above and from every creature's own normal loot table (trophies, meat, " +
+                "materials) -- those are completely unaffected and uncapped. This roll, when it succeeds, spawns at most ONE extra weapon or " +
+                "armor piece near the kill, by design (user's own words: 'not a POE loot explosion').");
+
+            AmbientLegendaryShare = Config.Bind(
+                "RarityLoot", "AmbientLegendaryShare", 0.02f,
+                "Of the kills that pass AmbientDropChance, the odds the drop is Legendary tier instead of Rare/Magic -- only reachable at all " +
+                "if the dying creature is on the DevTool Creature editor's 'Legendary Drop Sources' list. For any other creature this share " +
+                "silently folds into the Rare odds below instead of being lost.");
+
+            AmbientRareShare = Config.Bind(
+                "RarityLoot", "AmbientRareShare", 0.18f,
+                "Of the kills that pass AmbientDropChance, the odds the drop is Rare tier (checked after Legendary). Everything else that " +
+                "passes AmbientDropChance rolls Magic.");
 
             VoltunDamageMultiplier = Config.Bind(
                 "VoltunsSet", "DamageMultiplier", 1.5f,
@@ -115,6 +194,18 @@ namespace ThunderFury.RarityLoot
             SmithingLegendaryCraftLevel = Config.Bind(
                 "RarityLoot", "SmithingLegendaryCraftLevel", 30,
                 "Smithing level required to craft a Legendary item (vision.md: a deliberate hard gate on the top gear tier). Exact level wasn't decided in the design doc, so this is a tunable default.");
+
+            LightningSwordBonusDamage = Config.Bind(
+                "LightningSword", "BonusLightningDamage", 6f,
+                "Flat lightning damage added on top of the base SwordBronze's own physical damage. Cut from an original 15 (2026-09-10, " +
+                "confirmed in-game as one-shotting everything with zero gear) -- SwordBronze is already a Black Forest-tier weapon found as " +
+                "a Meadows drop, so this bonus doesn't need to be large on top of that to still feel special. Also stacks with a rolled " +
+                "Legendary affix (up to +20% total damage, see Affixes/AffixPool.cs's DamageAffixId Min/Max) -- both are independently " +
+                "live-tunable without a rebuild if it still feels off.");
+
+            LightningSwordDropChance = Config.Bind(
+                "LightningSword", "DropChance", 0.01f,
+                "Chance per kill for Boar or Neck to drop a Lightning Sword. 0.01 = 1%. Not craftable by design -- this is the only way to get one.");
         }
 
         private void OnDestroy()

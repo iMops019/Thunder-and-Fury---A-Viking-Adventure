@@ -13,6 +13,12 @@ and modding-limits research.
 
 Valheim 1.0 released 2026-09-09. Iron Gate gave no compatibility guarantee
 for existing mods and published no public test branch ahead of launch.
+As of 2026-09-11, the mod has an in-game content editor (Dev Tool, F9), a
+working skill/QoL/quest/rarity-loot layer, and 176 hand-placed Legendary
+items across all 8 biomes — all confirmed running in-game. See
+[docs/PROGRESS.md](docs/PROGRESS.md) for the authoritative, per-feature
+status and [docs/valheim-mod-vision.md](docs/valheim-mod-vision.md)'s own
+Status section for a higher-level summary.
 
 Verified against the real local install (confirmed at
 `C:\Program Files (x86)\Steam\steamapps\common\Valheim`, and against the
@@ -32,18 +38,38 @@ actual post-1.0 build specifically — see the decompile note below):
   node) to generate the publicized assemblies cleanly; normal parallel
   builds are fine afterward since the files then already exist.
 - **Full green build confirmed** (`dotnet build -m:1`, then plain
-  `dotnet build`): all 5 projects compile with 0 errors. Only a harmless
+  `dotnet build`): all 6 projects (Core, DevTool, ExampleMiniMod,
+  RarityLoot, Quests, ValheimQoL) compile with 0 errors. Only a harmless
   `UnityEngine.ProfilerModule` reference warning remains (an unused Unity
   module reference, not a real problem). See setup step 2 below for the
   one thing needed to get here if you installed BepInEx via a mod
   manager rather than a manual copy.
+- **A same-day post-1.0 hotfix silently broke several field accesses**:
+  fields that were public when this project's code was first written
+  (`Character.m_nview`, `InventoryGui.m_dragItem`/`m_craftRecipe`,
+  `CharacterDrop.m_dropsEnabled`, `MineRock.m_nview`) became private on
+  the real game assembly, while the locally-generated "publicized"
+  reference assembly still showed them as public — meaning affected code
+  compiled clean but threw `FieldAccessException` at runtime. If you hit
+  one of these against a *future* game update, the fix pattern is:
+  `GetComponent<T>()` for a public alternative where one exists, or
+  Harmony's `Traverse.Create(obj).Field<T>("m_fieldName").Value`
+  otherwise — never assume "compiles" means "the real field is still
+  public."
+- **BepInEx's actual install location may not be the Steam game
+  folder.** If you manage mods through a mod manager (this project's
+  active install is under Thunderstore Mod Manager's own profile
+  folder), point `BEPINEX_PATH` at that profile's `BepInEx` folder, not
+  `<Valheim install>\BepInEx` — the latter may not exist at all, or may
+  be an empty/stale leftover.
 - **Decompiling the real game code:** `dotnet tool install -g ilspycmd`
   gives a throwaway global decompiler, no project reference needed. Run
-  `ilspycmd -t <TypeName> <dll>` against
-  `valheim_Data\Managed\publicized_assemblies\assembly_valheim_publicized.dll`
-  to dump one class to readable C#. This is how every ValheimQoL patch was
-  written — confirming actual 1.0 method/field names first rather than
-  guessing against pre-release assumptions.
+  `ilspycmd -t <TypeName> <dll>` against the REAL
+  `valheim_Data\Managed\assembly_valheim.dll` (not the `_publicized`
+  copy — see the hotfix note above for why that distinction now
+  matters) to dump one class to readable C#. This is how every patch in
+  this project was written — confirming actual 1.0 method/field names
+  and accessibility first rather than guessing.
 
 ## Structure
 
@@ -51,39 +77,48 @@ actual post-1.0 build specifically — see the decompile note below):
 src/
   Core/                     Shared framework: skill system (generic
                              vanilla-XP redirect + Jotunn registration,
-                             reuses vanilla's own leveling curve),
-                             shared UI theme, shared keybinds, shared
-                             modifier registry. Everything else depends
-                             on this. All 12 skills from vision.md's skill
-                             list are implemented — Mining, Woodcutting,
-                             Fishing, Skinning, Smithing, Cooking,
-                             Fletching, Building, Crafting, Attack,
-                             Strength, Defense — each reusing a real
-                             (often dormant) vanilla mechanic for
-                             XP/effects rather than inventing new systems
-                             where one already existed. None of it is
-                             runtime-tested yet — see docs/PROGRESS.md for
-                             exact per-skill status and scope caveats.
+                             reuses vanilla's own leveling curve), combat
+                             extras (Chain Lightning proc, generic weapon
+                             special-effect dispatch), shared quest/skill
+                             "dumb registries" other mini-mods read from,
+                             shared UI theme, shared keybinds. Everything
+                             else depends on this. All 12 skills from
+                             vision.md's skill list are implemented and
+                             confirmed working in-game — Mining,
+                             Woodcutting, Fishing, Skinning, Smithing,
+                             Cooking, Fletching, Building, Crafting,
+                             Attack, Strength, Defense.
   MiniMods/
+    DevTool/                 In-game content editor overlay (press F9).
+                             Depends on Core. 11 tabs: Item/Piece/
+                             Creature/Recipe/Skill/Quest Creators, World/
+                             Biome/Dungeon editors, a Spawn tab (instant-
+                             give any item for testing), and a Values tab
+                             that generically surfaces every loaded
+                             plugin's Config.Bind entries for live tuning.
+                             Confirmed working in-game.
     ExampleMiniMod/         Template — copy this folder to start a new
                              mini-mod that depends on Core.
     RarityLoot/              Magic/Rare/Legendary item tiers. Depends on
                              Core. Generic rolled-affix framework
-                             implemented (PoE-style, stored in vanilla's
-                             own per-item save data); Stone Pickaxe,
-                             Voltun's Set (Legendary, now level-gated by
-                             Smithing), and the Skinning Knife (paired
-                             with Core's Skinning skill) all use it.
-                             Rolling ordinary vanilla gear into Magic/Rare
-                             is still undesigned.
-    Quests/                  Objective-based quests + quest giver NPC(s).
-                             Depends on Core.
-    ValheimQoL/              QoL pillar — every planned feature implemented
-                             and compiles clean (weight/stack, stamina
+                             (PoE-style, stored in vanilla's own per-item
+                             save data); ordinary vanilla gear rolls
+                             Magic/Rare at config-tunable odds; a
+                             biome-aware ambient drop system gates
+                             Magic/Rare/Legendary by the killed creature's
+                             biome so higher tiers can't show up too
+                             early. Plus 176 hand-placed Legendary
+                             weapons/armor (11 each across all 8 biomes,
+                             drop-only, themed by creature), Voltun's Set,
+                             the Lightning Sword, and the Skinning Knife.
+                             All confirmed working in-game.
+    Quests/                  Objective-based quests via a buildable
+                             Adventure Board (not an NPC). Depends on
+                             Core and RarityLoot.
+    ValheimQoL/              QoL pillar — weight/stack, stamina
                              drain+regen, building snap/placement,
                              auto-pickup+sort, quick slots, craft from
-                             containers) but none runtime-tested yet — see
-                             docs/PROGRESS.md for per-feature status.
+                             containers. Confirmed working in-game.
                              Standalone: no Core or Jotunn dependency,
                              ships independently.
 docs/
@@ -128,14 +163,15 @@ others.
      new terminal/IDE window for it to take effect.
 3. First build: `dotnet build -m:1` at the repo root (see the race-condition
    note above). Regular builds after that can drop `-m:1`.
-4. Optional but recommended: search Thunderstore for "BepInEx
-   ConfigurationManager" and install it as a separate mod. Every
-   mini-mod's tunables are plain BepInEx `Config.Bind` entries, so this
-   gives an in-game F1 menu to change them live — material costs,
-   multipliers, everything — without a recompile.
+4. No separate config-editor mod needed — `ThunderFury.DevTool`'s own
+   in-game panel (press **F9**) has a Values tab listing every mod's
+   `Config.Bind` entries, live-editable, no recompile. (Superseded the
+   earlier "install BepInEx ConfigurationManager" recommendation.)
 
 ## Deploying a build for local testing
 
-Build output isn't auto-copied into `BepInEx/plugins` yet — that's a
-follow-up once we've confirmed the exact plugin folder layout each project
-needs (a post-build copy step per project).
+Automated as of 2026-09-10 (`Directory.Build.targets`): every `dotnet build`
+copies each project's own DLL+PDB straight into `BEPINEX_PATH\plugins\<AssemblyName>\`
+(or `VALHEIM_INSTALL\BepInEx\plugins\...` if `BEPINEX_PATH` isn't set). Just
+build, then launch the profile from Thunderstore Mod Manager/r2modman — no
+manual copy step. Skipped silently if neither env var is set.

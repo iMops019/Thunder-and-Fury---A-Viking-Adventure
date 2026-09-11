@@ -3,6 +3,7 @@
     <Project Path="src/Core/Core.csproj" />
   </Folder>
   <Folder Name="/src/MiniMods/">
+    <Project Path="src/MiniMods/DevTool/DevTool.csproj" />
     <Project Path="src/MiniMods/ExampleMiniMod/ExampleMiniMod.csproj" />
     <Project Path="src/MiniMods/Quests/Quests.csproj" />
     <Project Path="src/MiniMods/RarityLoot/RarityLoot.csproj" />

@@ -51,7 +51,11 @@ namespace ThunderFury.RarityLoot.Affixes
             }
         }
 
-        static bool IsArmorSlot(ItemDrop.ItemData.ItemType type)
+        // Public so the ordinary-gear random roll (ItemRollTrigger.cs) can
+        // reuse the exact same Weapon/Armor classification this file
+        // already uses for affix targeting, instead of a second
+        // hand-maintained copy of the same 4-case check.
+        public static bool IsArmorSlot(ItemDrop.ItemData.ItemType type)
         {
             return type == ItemDrop.ItemData.ItemType.Helmet
                 || type == ItemDrop.ItemData.ItemType.Chest
@@ -78,6 +82,30 @@ namespace ThunderFury.RarityLoot.Affixes
                 {
                     yield return new KeyValuePair<string, float>(kv.Key.Substring(AffixKeyPrefix.Length), value);
                 }
+            }
+        }
+
+        // Lets a caller that already knows exactly which tier/affixes an
+        // instance should have (the ambient biome drop roll) discard
+        // whatever the generic Clone()-Postfix above already rolled on
+        // it first, rather than layering a second roll's affixes on top
+        // of the first's leftover keys.
+        public static void ClearRoll(ItemDrop.ItemData item)
+        {
+            if (item.m_customData == null) return;
+
+            List<string> keysToRemove = new List<string>();
+            foreach (string key in item.m_customData.Keys)
+            {
+                if (key == TierKey || key.StartsWith(AffixKeyPrefix, StringComparison.Ordinal))
+                {
+                    keysToRemove.Add(key);
+                }
+            }
+
+            foreach (string key in keysToRemove)
+            {
+                item.m_customData.Remove(key);
             }
         }
 

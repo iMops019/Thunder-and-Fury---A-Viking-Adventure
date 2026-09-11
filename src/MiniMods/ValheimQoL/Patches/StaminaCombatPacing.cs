@@ -8,9 +8,16 @@ namespace ValheimQoL.Patches
     [HarmonyPatch(typeof(Character), nameof(Character.UseStamina))]
     public static class StaminaDrainPatch
     {
-        static void Prefix(ref float v)
+        // Harmony wires up a ref-parameter Prefix by matching the
+        // ORIGINAL method's parameter name exactly -- confirmed the hard
+        // way in-game (2026-09-10): the real vanilla parameter is named
+        // "stamina", not "v", and Harmony fails to patch at all
+        // ("Parameter 'v' not found") if the names don't match, silently
+        // leaving this whole patch (and everything routed through it:
+        // attacks, blocking, sprinting, jumping, dodging) un-applied.
+        static void Prefix(ref float stamina)
         {
-            v *= ValheimQoLPlugin.StaminaDrainMultiplier.Value;
+            stamina *= ValheimQoLPlugin.StaminaDrainMultiplier.Value;
         }
     }
 

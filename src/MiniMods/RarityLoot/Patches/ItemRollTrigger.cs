@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using ThunderFury.RarityLoot.Affixes;
@@ -42,16 +43,85 @@ namespace ThunderFury.RarityLoot.Patches
         }
     }
 
+    // ---- Ordinary vanilla gear: random Magic/Rare rolls ----
+    //
+    // Closes vision.md's own long-open question ("which items are
+    // eligible to roll Magic/Rare, and at what odds") without inventing a
+    // second mechanism: same Clone()-Postfix hook as the fixed-tier path
+    // above (crafting, looting, and dropping all clone through
+    // ItemData.Clone(), confirmed when the affix framework was first
+    // built), same ItemRoller.Roll() call, same shared AffixPool. Only
+    // new part is deciding eligibility and odds, both content/balance
+    // calls vision.md deliberately left open:
+    //  - Eligibility: any weapon or armor-slot item, full stop -- reuses
+    //    ItemRoller's own Weapon/Armor classification (item.IsWeapon(),
+    //    IsArmorSlot) instead of a hand-maintained item-name list, so
+    //    this covers every vanilla weapon/armor piece in the game (and
+    //    any future one) automatically, matching how the rest of this
+    //    codebase prefers a generic type check over a name list wherever
+    //    one exists.
+    //  - Odds: flat, config-tunable chance per eligible item creation,
+    //    checked once (rarer tier first so its odds aren't shadowed by
+    //    the more common one). Legendary is deliberately excluded from
+    //    this random pool -- vision.md frames Legendary as
+    //    named/hand-crafted (Voltun's Set), never randomly rolled onto an
+    //    ordinary item, so only Magic and Rare are reachable here.
+    //  - Deliberately NOT built this pass, flagged as a good follow-up:
+    //    scaling craft-time odds by the crafting player's Smithing level
+    //    (a natural fit for vision.md's "gate rewards" progression
+    //    principle) -- doing that correctly needs a second, earlier hook
+    //    point than this generic Clone() Postfix (to know who's crafting
+    //    and prevent a double-roll), which is real additional work, not
+    //    a one-line addition.
     [HarmonyPatch(typeof(ItemDrop.ItemData), nameof(ItemDrop.ItemData.Clone))]
     public static class ItemRollTriggerPatch
     {
+        static readonly Random Rng = new Random();
+
         static void Postfix(ItemDrop.ItemData __result)
         {
             if (__result?.m_shared == null) return;
             if (ItemRoller.IsRolled(__result)) return;
-            if (!ItemRollTrigger.TryGetRollSpec(__result.m_shared, out RarityTier tier, out int affixCount)) return;
 
-            ItemRoller.Roll(__result, tier, affixCount);
+            if (ItemRollTrigger.TryGetRollSpec(__result.m_shared, out RarityTier fixedTier, out int fixedAffixCount))
+            {
+                ItemRoller.Roll(__result, fixedTier, fixedAffixCount);
+                return;
+            }
+
+            if (TryRollOrdinaryGear(__result, out RarityTier randomTier, out int randomAffixCount))
+            {
+                ItemRoller.Roll(__result, randomTier, randomAffixCount);
+            }
+        }
+
+        static bool TryRollOrdinaryGear(ItemDrop.ItemData item, out RarityTier tier, out int affixCount)
+        {
+            tier = RarityTier.Normal;
+            affixCount = 0;
+
+            bool eligible = item.IsWeapon() || ItemRoller.IsArmorSlot(item.m_shared.m_itemType);
+            if (!eligible) return false;
+
+            double roll = Rng.NextDouble();
+            double rareChance = RarityLootPlugin.OrdinaryRareChance.Value;
+            double magicChance = RarityLootPlugin.OrdinaryMagicChance.Value;
+
+            if (roll < rareChance)
+            {
+                tier = RarityTier.Rare;
+                affixCount = RarityLootPlugin.OrdinaryRareAffixCount.Value;
+                return true;
+            }
+
+            if (roll < rareChance + magicChance)
+            {
+                tier = RarityTier.Magic;
+                affixCount = RarityLootPlugin.OrdinaryMagicAffixCount.Value;
+                return true;
+            }
+
+            return false;
         }
     }
 }
